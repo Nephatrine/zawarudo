@@ -6,9 +6,12 @@ rather than any sort of actual science.
 
 ## Installation
 
+`mkdir build`
+`cd build`
+`cmake ..`
 `make && make install`
 
 ## Usage
 
-TODO
+- Generate Geodesic Base Data: `subdivide [iterations]`
 

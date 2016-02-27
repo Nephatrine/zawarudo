@@ -57,11 +57,11 @@ namespace zw
 	using cell_size_t = u32_t;
 #	endif
 	static_assert( sizeof( std::size_t ) >= 8,
-	              "SUBDIVIDE_LIMIT does not support values over 14." );
+	               "SUBDIVIDE_LIMIT does not support values over 14." );
 #else
 #	error "SUBDIVIDE_LIMIT does not support values over 30."
 #endif
-
+	
 #define MATH_REAL_T zw::real_t
 #if SPACE_SAVING == 2
 	using real_t = float;
