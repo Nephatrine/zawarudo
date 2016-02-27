@@ -5,6 +5,9 @@
 
 // ------------
 // User Options
+// NOTE: At SPACE_SAVING 2, 12-13 subdivisions will probably consume almost all
+// of the RAM available to a consumer PC. Keep that in mind if you want to try
+// playing around with higher subdivision counts or higher precision.
 //
 #define SPACE_SAVING 2
 #define SUBDIVIDE_LIMIT 14
@@ -53,12 +56,12 @@ namespace zw
 #	else
 	using cell_size_t = u32_t;
 #	endif
-	static_asset( sizeof( size_t ) >= 8,
+	static_assert( sizeof( std::size_t ) >= 8,
 	              "SUBDIVIDE_LIMIT does not support values over 14." );
 #else
 #	error "SUBDIVIDE_LIMIT does not support values over 30."
 #endif
-	
+
 #define MATH_REAL_T zw::real_t
 #if SPACE_SAVING == 2
 	using real_t = float;
