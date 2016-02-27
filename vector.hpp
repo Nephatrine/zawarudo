@@ -104,12 +104,12 @@ namespace math
 	};
 	
 	// More Operators
-	vector operator+( const vector &a, const vector &b ) {return vector( a ) += b;}
-	vector operator-( const vector &a, const vector &b ) {return vector( a ) -= b;}
-	vector operator*( const vector &v, const real_t s ) {return vector( v ) *= s;}
-	vector operator/( const vector &v, const real_t s ) {return vector( v ) /= s;}
+	inline vector operator+( const vector &a, const vector &b ) {return vector( a ) += b;}
+	inline vector operator-( const vector &a, const vector &b ) {return vector( a ) -= b;}
+	inline vector operator*( const vector &v, const real_t s ) {return vector( v ) *= s;}
+	inline vector operator/( const vector &v, const real_t s ) {return vector( v ) /= s;}
 	
-	std::ostream &operator<<( std::ostream &s, const vector &v )
+	inline std::ostream &operator<<( std::ostream &s, const vector &v )
 	{
 		return s << "{" << v.x << "," << v.y << "," << v.z << "}";
 	}
