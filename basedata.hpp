@@ -51,6 +51,8 @@ namespace zw
 	int loadBaseData( const int iterationsNeeded,
 	                  std::unique_ptr<geodesicData[]> &data, cell_size_t &sizeNeeded,
 	                  const bool pretend = false );
+	void saveBaseData( const int iterationsCurrent,
+	                   std::unique_ptr<geodesicData[]> &data, const cell_size_t cellsCurrent );
 }
 
 #endif

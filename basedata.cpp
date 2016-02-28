@@ -43,3 +43,22 @@ int zw::loadBaseData( const int iterationsNeeded,
 	return -1;
 }
 
+void zw::saveBaseData( const int iterationsCurrent,
+                       std::unique_ptr<geodesicData[]> &data, const cell_size_t cellsCurrent )
+{
+	std::stringstream fileName;
+	fileName << "geodesic_" << iterationsCurrent << ".dat";
+	serialize::output dataFile( fileName.str() );
+	
+	dataFile.write( cellsCurrent );
+	
+	for ( cell_size_t i = 0; i < cellsCurrent; ++i )
+	{
+		dataFile.write( data[i].link, 6 );
+		dataFile.write( data[i].v.x );
+		dataFile.write( data[i].v.y );
+		dataFile.write( data[i].v.z );
+		dataFile.write( data[i].region );
+	}
+}
+

@@ -2,6 +2,7 @@
 #include <sstream>
 
 #include "basedata.hpp"
+#include "monomap.hpp"
 #include "ezOptionParser.hpp"
 
 void Usage( ez::ezOptionParser &opt )
@@ -247,11 +248,38 @@ int main( int argc, const char *argv[] )
 		geodesic[11].link[5] = geodesicData::nolink;
 		
 		for ( int i = 0; i < 12; ++i )
+		{
+			geodesic[i].v = geodesic[i].v.normalize();
+			std::cout << "Point " << i << std::endl;
+			std::cout << "   " << geodesic[i].v.latitude() << " \t" <<
+			          geodesic[i].v.longitude() << " \t" << geodesic[i].v.magnitude() << std::endl;
 			geodesic[i].region = i;
-			
+		}
+		
 		iterationsCurrent = 0;
 		cellsCurrent = 12;
 	}
+	
+	//
+	// Save Last Iteration Performed
+	//
+	
+	saveBaseData( iterationsCurrent, geodesic, cellsCurrent );
+	
+	//
+	// Write Regional Map
+	// Right now this is one of the few ways to visualize the output so far.
+	//
+	
+	monomap<512, 256> mapRegion;
+	mapRegion.max = 11;
+	
+	for ( int i = 0; i < cellsCurrent; ++i )
+		mapRegion.setPixel( geodesic[i].v.latitude(), geodesic[i].v.longitude(),
+		                    geodesic[i].region );
+		                    
+	mapRegion.fill();
+	mapRegion.write( "regions.png" );
 	
 	return 0;
 }
