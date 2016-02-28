@@ -118,30 +118,30 @@ set(SUBDIVIDE_SOURCE
 	"${PROJECT_SOURCE_DIR}/basedata.cpp"
 	"${PROJECT_SOURCE_DIR}/monomap.cpp"
 	"${PROJECT_SOURCE_DIR}/subdivide.cpp")
-add_executable(subdivide ${SUBDIVIDE_SOURCE} ${SUBDIVIDE_HEADERS})
+add_executable(zw-subdivide ${SUBDIVIDE_SOURCE} ${SUBDIVIDE_HEADERS})
 if(HONOR_VISILIBITY)
-	set_target_properties("subdivide" PROPERTIES
+	set_target_properties(zw-subdivide PROPERTIES
 		C_VISIBILITY_PRESET hidden)
 endif()
-set_target_properties("subdivide" PROPERTIES
+set_target_properties(zw-subdivide PROPERTIES
 	COMPILE_OPTIONS ${CUSTOM_CFLAGS}
 	LINK_FLAGS ${CUSTOM_LDFLAGS}
 	POSITION_INDEPENDENT_CODE ON)
 
 if(BUILD_TESTS)
 	enable_testing()
-	add_test(subdivide_scratch subdivide --force 2)
-	add_test(subdivide_reuse subdivide 2)
+	add_test(subdivide_scratch zw-subdivide --force 2)
+	add_test(subdivide_reuse zw-subdivide 2)
 endif()
 
-install(TARGETS subdivide
+install(TARGETS zw-subdivide
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 if(MSVC)
-	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/Debug/subdivide.pdb"
+	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/Debug/zw-subdivide.pdb"
 		DESTINATION ${CMAKE_INSTALL_BINDIR} CONFIGURATIONS Debug)
-	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/subdivide.pdb"
+	install(FILES "${CMAKE_CURRENT_BINARY_DIR}/RelWithDebInfo/zw-subdivide.pdb"
 		DESTINATION ${CMAKE_INSTALL_BINDIR} CONFIGURATIONS RelWithDebInfo)
 endif()
 install(FILES "${PROJECT_SOURCE_DIR}/LICENSE.md" DESTINATION ${CMAKE_INSTALL_DOCDIR})

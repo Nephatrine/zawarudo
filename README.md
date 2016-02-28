@@ -13,5 +13,5 @@ rather than any sort of actual science.
 
 ## Usage
 
-- Generate Geodesic Base Data: `subdivide [iterations]`
+- Generate Geodesic Base Data: `zw-subdivide [iterations]`
 
