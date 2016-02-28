@@ -25,8 +25,8 @@ int main( int argc, const char *argv[] )
 	
 	ez::ezOptionParser opt;
 	opt.overview = "\nCreate base data for truncated icosahedron geodesics.";
-	opt.syntax = "subdivide [OPTIONS] [iterations]";
-	opt.example = "subdivide 10\n\n";
+	opt.syntax = "zw-subdivide [OPTIONS] [iterations]";
+	opt.example = "zw-subdivide 10\n\n";
 	opt.footer =
 	    "Copyright (C) 2016 Daniel Wolf\nThis program is free and without warranty.\n\n";
 	opt.add( "", 0, 0, 0, "Display usage instructions.", "-h", "--help" );
