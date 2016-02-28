@@ -26,7 +26,7 @@ int zw::loadBaseData( const int iterationsNeeded,
 		{
 			if ( !pretend )
 			{
-				for ( zw::cell_size_t i = 0; i < cellsCurrent; ++i )
+				for ( cell_size_t i = 0; i < cellsCurrent; ++i )
 				{
 					dataFile.read( data[i].link, 6 );
 					dataFile.read( data[i].v.x );

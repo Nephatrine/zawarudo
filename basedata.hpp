@@ -24,7 +24,7 @@ namespace zw
 		
 		cell_size_t link[6];
 		math::vector v;
-		zw::u8_t region;
+		u8_t region;
 		
 		static const cell_size_t nolink = std::numeric_limits<cell_size_t>::max();
 	};
