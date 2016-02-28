@@ -22,8 +22,8 @@ namespace zw
 			int x = ( lon + 180.0 ) / 360.0 * ( X - 1 );
 			int y = ( 180.0 - ( lat + 90.0 ) ) / 180.0 * ( Y - 1 );
 			
-			assert( x > 0 && x < X );
-			assert( y > 0 && y < Y );
+			assert( x >= 0 && x < X );
+			assert( y >= 0 && y < Y );
 			
 			std::size_t pixel = x + ( y * X );
 			
