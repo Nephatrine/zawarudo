@@ -265,7 +265,7 @@ int main( int argc, const char *argv[] )
 	//
 	
 	bool greaterNode = true;
-	unsigned char regionScore[12] = {0};
+	cell_size_t regionScore[12] = {0};
 	
 	while ( iterationsCurrent < iterationsNeeded )
 	{
@@ -312,11 +312,6 @@ int main( int argc, const char *argv[] )
 				
 				++regionScore[geodesic[created].region];
 				
-				for ( int i = 0; i < 12; ++i )
-					if ( regionScore[i] > 250 )
-						for ( int j = 0; j < 12; ++j )
-							regionScore[j] -= std::min<unsigned char>( regionScore[j], 50u );
-							
 				//
 				// Here's how the linking works. In the original hexagon, there
 				// is a "center" which is the Parent node. This center has 6
@@ -465,7 +460,8 @@ int main( int argc, const char *argv[] )
 	// Right now this is one of the few ways to visualize the output so far.
 	//
 	
-	monomap<512, 256> mapRegion;
+	std::cout << "Saving Regional Map" << std::endl;
+	monomap<768, 512> mapRegion;
 	mapRegion.max = 11;
 	
 	for ( int i = 0; i < cellsCurrent; ++i )
