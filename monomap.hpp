@@ -32,6 +32,11 @@ namespace zw
 			data[pixel] = ( 255.0 - offset ) * ( value - min ) / ( max - min ) + offset;
 		}
 		
+		int traverse( int x )
+		{
+			return ( x < X / 2 ) ? ( x + X / 2 ) : ( x - X / 2 );
+		}
+		
 		void fill()
 		{
 			unsigned char newstate[X * Y] = {0};
@@ -84,9 +89,9 @@ namespace zw
 								tot += data[pixel - X];
 								++div;
 							}
-							else if ( y == 0 && data[pixel + X * ( Y - 1 )] )
+							else if ( y == 0 && data[traverse( x )] )
 							{
-								tot += data[pixel + X * ( Y - 1 )];
+								tot += data[traverse( x )];
 								++div;
 							}
 							
@@ -95,9 +100,9 @@ namespace zw
 								tot += data[pixel + X];
 								++div;
 							}
-							else if ( y == Y - 1 && data[x] )
+							else if ( y == Y - 1 && data[traverse( x ) + y * X] )
 							{
-								tot += data[x];
+								tot += data[traverse( x ) + y * X];
 								++div;
 							}
 							
