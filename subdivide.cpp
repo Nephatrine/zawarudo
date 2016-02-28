@@ -1,12 +1,14 @@
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 #include "basedata.hpp"
 #include "monomap.hpp"
+#include "subdivide.hpp"
 
 #include "lib/ezOptionParser.hpp"
 
-void Usage( ez::ezOptionParser &opt )
+static void Usage( ez::ezOptionParser &opt )
 {
 	std::string usage;
 	opt.getUsage( usage );
@@ -250,10 +252,7 @@ int main( int argc, const char *argv[] )
 		
 		for ( int i = 0; i < 12; ++i )
 		{
-			geodesic[i].v = geodesic[i].v.normalize();
-			std::cout << "Point " << i << std::endl;
-			std::cout << "   " << geodesic[i].v.latitude() << " \t" <<
-			          geodesic[i].v.longitude() << " \t" << geodesic[i].v.magnitude() << std::endl;
+			geodesic[i].v /= geodesic[i].v.magnitude();
 			geodesic[i].region = i;
 		}
 		
@@ -262,9 +261,203 @@ int main( int argc, const char *argv[] )
 	}
 	
 	//
-	// Save Last Iteration Performed
+	// Subdivide
 	//
 	
+	bool greaterNode = true;
+	unsigned char regionScore[12] = {0};
+	
+	while ( iterationsCurrent < iterationsNeeded )
+	{
+		// Save Previous Iteration
+		saveBaseData( iterationsCurrent, geodesic, cellsCurrent );
+		
+		std::cout << "Starting Iteration " << ++iterationsCurrent << std::endl;
+		
+		std::vector<deferral> deferList;
+		
+		cell_size_t extant = cellsCurrent, created, other;
+		int regionA, regionB;
+		
+		for ( cell_size_t parent = 0; parent < extant; ++parent )
+		{
+			for ( int spoke = 0; spoke < 6; ++spoke )
+			{
+				cell_size_t child = geodesic[parent].link[spoke];
+				
+				if ( child >= extant )
+					continue; // Don't process already split spokes.
+					
+				// Create New Spoke
+				
+				created = cellsCurrent++;
+				geodesic[created].v = ( ( geodesic[parent].v + geodesic[child].v ) /
+				                        2 ).normalize();
+				                        
+				// Assign Region
+				
+				regionA = geodesic[parent].region;
+				regionB = geodesic[child].region;
+				
+				if ( regionScore[regionA] > regionScore[regionB] )
+					geodesic[created].region = regionB;
+				else if ( regionScore[regionB] > regionScore[regionA] )
+					geodesic[created].region = regionA;
+				else if ( greaterNode = !greaterNode )
+					geodesic[created].region = std::max( regionA, regionB );
+				else
+					geodesic[created].region = std::min( regionB, regionA );
+					
+				// Region Balancing?
+				
+				++regionScore[geodesic[created].region];
+				
+				for ( int i = 0; i < 12; ++i )
+					if ( regionScore[i] > 250 )
+						for ( int j = 0; j < 12; ++j )
+							regionScore[j] -= std::min<unsigned char>( regionScore[j], 50u );
+							
+				//
+				// Here's how the linking works. In the original hexagon, there
+				// is a "center" which is the Parent node. This center has 6
+				// spokes leading to the vertices of the hexagon. We are
+				// creating a new point between the Parent and one of the spokes
+				// we'll call the Child. The Created node needs to be linked to
+				// both the Parent and Child. In the original hexagon, we also
+				// need to know the Child's sibling nodes on either side from
+				// the parent: CounterClockwise and Clockwise.
+				//
+				// During this iteration, the links between these two nodes and
+				// both the Parent and Child should be subdivided just like this
+				// Parent<->Child spoke, creating four new nodes. Our newly
+				// Created node needs to link to all four of these. Some of them
+				// are likely to have already been created previously in the
+				// subdivision process and we can link straight to them. Others
+				// will not have been created yet and we'll need to set up
+				// deferred links which will be created when the nodes are.
+				//
+				// link[0] = Parent
+				// link[1] = Parent<->CounterClockwise
+				// link[2] = CounterClockwise<->Child
+				// link[3] = Child
+				// link[4] = Clockwise<->Child
+				// link[5] = Parent<->Clockwise
+				//
+				
+				// Create Link 0
+				
+				geodesic[created].link[0] = parent;
+				geodesic[parent].link[spoke] = created;
+				
+				// Create Link 1
+				
+				other = geodesic[parent].counterClockwise( spoke );
+				
+				if ( other >= extant )
+				{
+					geodesic[created].link[1] = other;
+					
+					if ( geodesic[other].link[0] == parent )
+						other = geodesic[other].link[3];
+					else
+						other = geodesic[other].link[0];
+				}
+				else
+					deferList.push_back( deferral( parent, other, 1, created ) );
+					
+				// Create Link 2
+				
+				for ( int s = 0; s < 6; ++s )
+				{
+					if ( geodesic[other].link[s] == child )
+					{
+						deferList.push_back( deferral( child, other, 2, created ) );
+						break;
+					}
+					else if ( ( geodesic[geodesic[other].link[s]].link[0] == child
+					            && geodesic[geodesic[other].link[s]].link[3] == other )
+					          || ( geodesic[geodesic[other].link[s]].link[0] == other
+					               && geodesic[geodesic[other].link[s]].link[3] == child ) )
+					{
+						geodesic[created].link[2] = geodesic[other].link[s];
+						break;
+					}
+				}
+				
+				// Create Link 3
+				
+				geodesic[created].link[3] = child;
+				
+				for ( int s = 0; s < 6; ++s )
+					if ( geodesic[child].link[s] == parent )
+					{
+						geodesic[child].link[s] = created;
+						break;
+					}
+					
+				// Create Link 5
+				
+				other = geodesic[parent].clockwise( spoke );
+				
+				if ( other >= extant )
+				{
+					geodesic[created].link[5] = other;
+					
+					if ( geodesic[other].link[0] == parent )
+						other = geodesic[other].link[3];
+					else
+						other = geodesic[other].link[0];
+				}
+				else
+					deferList.push_back( deferral( parent, other, 5, created ) );
+					
+				// Create Link 4
+				
+				for ( int s = 0; s < 6; ++s )
+				{
+					if ( geodesic[other].link[s] == child )
+					{
+						deferList.push_back( deferral( child, other, 4, created ) );
+						break;
+					}
+					else if ( ( geodesic[geodesic[other].link[s]].link[0] == child
+					            && geodesic[geodesic[other].link[s]].link[3] == other )
+					          || ( geodesic[geodesic[other].link[s]].link[0] == other
+					               && geodesic[geodesic[other].link[s]].link[3] == child ) )
+					{
+						geodesic[created].link[4] = geodesic[other].link[s];
+						break;
+					}
+				}
+			}
+		}
+		
+		// Process Deferred Links
+		
+		for ( auto const &d : deferList )
+		{
+			for ( int s = 0; s < 6; ++s )
+			{
+				other = geodesic[d.a].link[s];
+				
+				if ( ( geodesic[other].link[0] == d.a && geodesic[other].link[3] == d.b )
+				        || ( geodesic[other].link[3] == d.a && geodesic[other].link[0] == d.b ) )
+				{
+					geodesic[d.c].link[d.s] = other;
+					break;
+				}
+				
+				// If we got here it means a deferral slipped through the
+				// cracks!
+				assert( s != 5 );
+			}
+		}
+		
+		deferList.clear();
+	}
+	
+	assert( cellsCurrent == cellsNeeded );
+	assert( iterationsCurrent == iterationsNeeded );
 	saveBaseData( iterationsCurrent, geodesic, cellsCurrent );
 	
 	//

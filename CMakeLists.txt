@@ -112,6 +112,7 @@ set(SUBDIVIDE_HEADERS
 	"${PROJECT_SOURCE_DIR}/lib/stb_image_write.h"
 	"${PROJECT_SOURCE_DIR}/monomap.hpp"
 	"${PROJECT_SOURCE_DIR}/serialize.hpp"
+	"${PROJECT_SOURCE_DIR}/subdivide.hpp"
 	"${PROJECT_SOURCE_DIR}/vector.hpp")
 set(SUBDIVIDE_SOURCE
 	"${PROJECT_SOURCE_DIR}/basedata.cpp"

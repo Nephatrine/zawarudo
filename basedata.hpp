@@ -22,6 +22,22 @@ namespace zw
 			: link {0, 0, 0, 0, 0, 0}, region( 12 )
 		{}
 		
+		cell_size_t counterClockwise( int spoke )
+		{
+			if ( spoke == 0 )
+				return link[5] == nolink ? link[4] : link[5];
+			else
+				return link[spoke - 1];
+		}
+		
+		cell_size_t clockwise( int spoke )
+		{
+			if ( spoke == 5 || link[spoke + 1] == nolink )
+				return link[0];
+			else
+				return link[spoke + 1];
+		}
+		
 		cell_size_t link[6];
 		math::vector v;
 		u8_t region;
