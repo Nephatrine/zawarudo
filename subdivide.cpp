@@ -19,7 +19,7 @@ int main( int argc, const char *argv[] )
 	
 	ez::ezOptionParser opt;
 	opt.overview = "\nCreate base data for truncated icosahedron geodesics.";
-	opt.syntax = "subdivide [iterations] [OPTIONS]";
+	opt.syntax = "subdivide [OPTIONS] [iterations]";
 	opt.example = "subdivide 10\n\n";
 	opt.footer =
 	    "Copyright (C) 2016 Daniel Wolf\nThis program is free and without warranty.\n\n";
@@ -97,6 +97,8 @@ int main( int argc, const char *argv[] )
 	if ( !forceRegen )
 		iterationsCurrent = zw::loadBaseData( iterationsNeeded, vertices, cellsNeeded,
 		                                      true );
+	else
+		zw::loadBaseData( iterationsNeeded, vertices, cellsNeeded, true );
 		                                      
 	auto cellsCurrent = zw::cellsPerIteration( iterationsCurrent );
 	
