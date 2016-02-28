@@ -13,10 +13,8 @@ namespace math
 	using real_t = double;
 #endif
 	
-	class vector
+	struct vector
 	{
-	public:
-	
 		// Constructors
 		
 		vector( const vector & ) = default;

@@ -1,6 +1,7 @@
 #ifndef BASEDATA_HPP
 #define BASEDATA_HPP
 
+#include <limits>
 #include <memory>
 
 #include "config.hpp"
@@ -8,15 +9,34 @@
 
 namespace zw
 {
-
-	constexpr vertex_size_t cellsPerIterationRecurse( const int iteration,
-	        const int target, const vertex_size_t cells, const vertex_size_t faces )
+	//
+	// GCC5 Linux x86_64:
+	//
+	// SPACE_SAVING 0 - 80 Bytes
+	// SPACE_SAVING 1 - 56 Bytes
+	// SPACE_SAVING 2 - 40 Bytes
+	//
+	struct geodesicData
+	{
+		geodesicData()
+			: link {0, 0, 0, 0, 0, 0}, region( 12 )
+		{}
+		
+		cell_size_t link[6];
+		math::vector v;
+		zw::u8_t region;
+		
+		static const cell_size_t nolink = std::numeric_limits<cell_size_t>::max();
+	};
+	
+	constexpr cell_size_t cellsPerIterationRecurse( const int iteration,
+	        const int target, const cell_size_t cells, const cell_size_t faces )
 	{
 		return ( iteration == target ) ? cells : cellsPerIterationRecurse(
 		           iteration + 1, target, cells + ( faces * 3 ) / 2, faces * 4 );
 	}
 	
-	constexpr vertex_size_t cellsPerIteration( const int iteration )
+	constexpr cell_size_t cellsPerIteration( const int iteration )
 	{
 		return ( iteration < 0 ) ? 0 : ( iteration == 0 ) ? 12 :
 		       cellsPerIterationRecurse( 0, iteration, 12, 20 );
@@ -28,8 +48,8 @@ namespace zw
 		       ( iterations <= 14 ) ? 6 : 14;
 	}
 	
-	int loadBaseData( const int iteration,
-	                  std::unique_ptr<math::vector[]> &vertices, vertex_size_t &sizeNeeded,
+	int loadBaseData( const int iterationsNeeded,
+	                  std::unique_ptr<geodesicData[]> &data, cell_size_t &sizeNeeded,
 	                  const bool pretend = false );
 }
 

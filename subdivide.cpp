@@ -13,6 +13,8 @@ void Usage( ez::ezOptionParser &opt )
 
 int main( int argc, const char *argv[] )
 {
+	using namespace zw;
+	
 	//
 	// Commandline Arguments
 	//
@@ -63,11 +65,12 @@ int main( int argc, const char *argv[] )
 	//
 	// User Options
 	//
-
+	
 	bool forceRegen = false;
-
-	if ( opt.isSet( "-f" ) )                                                                        		forceRegen = true;
-
+	
+	if ( opt.isSet( "-f" ) )
+		forceRegen = true;
+		
 	int iterationsNeeded = -1;
 	
 	if ( opt.lastArgs.size() > 0 )
@@ -87,20 +90,18 @@ int main( int argc, const char *argv[] )
 	}
 	
 	//
-	// Load Existing Data
+	// Check Existing Data
 	//
 	
-	std::unique_ptr<math::vector[]> vertices;
-	zw::vertex_size_t cellsNeeded;
-	int iterationsCurrent = -1;
-	
-	if ( !forceRegen )
-		iterationsCurrent = zw::loadBaseData( iterationsNeeded, vertices, cellsNeeded,
-		                                      true );
-	else
-		zw::loadBaseData( iterationsNeeded, vertices, cellsNeeded, true );
-		                                      
-	auto cellsCurrent = zw::cellsPerIteration( iterationsCurrent );
+	std::unique_ptr<geodesicData[]> geodesic;
+	cell_size_t cellsNeeded;
+	int iterationsCurrent = loadBaseData( iterationsNeeded, geodesic, cellsNeeded,
+	                                      true );
+	                                      
+	if ( forceRegen )
+		iterationsCurrent = -1;
+		
+	auto cellsCurrent = cellsPerIteration( iterationsCurrent );
 	
 	if ( iterationsCurrent == iterationsNeeded )
 	{
@@ -109,24 +110,18 @@ int main( int argc, const char *argv[] )
 	}
 	else
 	{
-		std::cout << "Requires " << cellsNeeded << " Verts (" << ( sizeof(
-		              math::vector ) * cellsNeeded ) << " Bytes)" << std::endl;
+		std::cout << "Requires " << cellsNeeded << " Fields (" << ( sizeof(
+		              geodesicData ) * cellsNeeded ) << " Bytes)" << std::endl;
 		              
 		try
 		{
-			vertices = std::unique_ptr<math::vector[]>( new math::vector[cellsNeeded] );
+			geodesic = std::unique_ptr<geodesicData[]>( new geodesicData[cellsNeeded] );
 		}
 		catch ( std::bad_alloc &ba )
 		{
 			std::cerr << "Unable to allocate required memory." << std::endl;
 			std::cerr << "Try a smaller subdivision value.\n" << std::endl;
 			throw;
-		}
-		
-		if ( iterationsCurrent >= 0 )
-		{
-			std::cout << "Loading data for iteration " << iterationsCurrent << "." << std::endl;
-			zw::loadBaseData( iterationsNeeded, vertices, cellsNeeded );
 		}
 	}
 	
@@ -136,36 +131,124 @@ int main( int argc, const char *argv[] )
 	
 	if ( iterationsCurrent < 0 )
 	{
-		zw::real_t t = ( 1.0 + std::sqrt( 5.0 ) ) / 2.0;
-		zw::real_t d = std::sqrt( 1.0 + std::pow( t, 2.0 ) );
-		zw::real_t tau = t / d;
-		zw::real_t one = 1 / d;
+		real_t t = ( 1.0 + std::sqrt( 5.0 ) ) / 2.0;
+		real_t d = std::sqrt( 1.0 + std::pow( t, 2.0 ) );
+		real_t tau = t / d;
+		real_t one = 1 / d;
 		
-		vertices[0].x = one;
-		vertices[0].z = tau;
-		vertices[1].x = -one;
-		vertices[1].z = tau;
-		vertices[8].x = one;
-		vertices[8].z = -tau;
-		vertices[11].x = -one;
-		vertices[11].z = -tau;
-		vertices[2].x = tau;
-		vertices[2].y = -one;
-		vertices[4].x = tau;
-		vertices[4].y = one;
-		vertices[6].x = -tau;
-		vertices[6].y = one;
-		vertices[7].x = -tau;
-		vertices[7].y = -one;
-		vertices[3].y = tau;
-		vertices[3].z = one;
-		vertices[5].y = -tau;
-		vertices[5].z = one;
-		vertices[9].y = -tau;
-		vertices[9].z = -one;
-		vertices[10].y = tau;
-		vertices[10].z = -one;
+		geodesic[0].v.x = one;
+		geodesic[0].v.y = 0;
+		geodesic[0].v.z = tau;
+		geodesic[1].v.x = -one;
+		geodesic[1].v.y = 0;
+		geodesic[1].v.z = tau;
+		geodesic[8].v.x = one;
+		geodesic[8].v.y = 0;
+		geodesic[8].v.z = -tau;
+		geodesic[11].v.x = -one;
+		geodesic[11].v.y = 0;
+		geodesic[11].v.z = -tau;
+		geodesic[2].v.x = tau;
+		geodesic[2].v.y = -one;
+		geodesic[2].v.z = 0;
+		geodesic[4].v.x = tau;
+		geodesic[4].v.y = one;
+		geodesic[4].v.z = 0;
+		geodesic[6].v.x = -tau;
+		geodesic[6].v.y = one;
+		geodesic[6].v.z = 0;
+		geodesic[7].v.x = -tau;
+		geodesic[7].v.y = -one;
+		geodesic[7].v.z = 0;
+		geodesic[3].v.x = 0;
+		geodesic[3].v.y = tau;
+		geodesic[3].v.z = one;
+		geodesic[5].v.x = 0;
+		geodesic[5].v.y = -tau;
+		geodesic[5].v.z = one;
+		geodesic[9].v.x = 0;
+		geodesic[9].v.y = -tau;
+		geodesic[9].v.z = -one;
+		geodesic[10].v.x = 0;
+		geodesic[10].v.y = tau;
+		geodesic[10].v.z = -one;
 		
+		geodesic[0].link[0] = 1;
+		geodesic[0].link[1] = 5;
+		geodesic[0].link[2] = 2;
+		geodesic[0].link[3] = 4;
+		geodesic[0].link[4] = 3;
+		geodesic[0].link[5] = geodesicData::nolink;
+		geodesic[1].link[0] = 0;
+		geodesic[1].link[1] = 3;
+		geodesic[1].link[2] = 6;
+		geodesic[1].link[3] = 7;
+		geodesic[1].link[4] = 5;
+		geodesic[1].link[5] = geodesicData::nolink;
+		geodesic[2].link[0] = 0;
+		geodesic[2].link[1] = 5;
+		geodesic[2].link[2] = 9;
+		geodesic[2].link[3] = 8;
+		geodesic[2].link[4] = 4;
+		geodesic[2].link[5] = geodesicData::nolink;
+		geodesic[3].link[0] = 0;
+		geodesic[3].link[1] = 4;
+		geodesic[3].link[2] = 10;
+		geodesic[3].link[3] = 6;
+		geodesic[3].link[4] = 1;
+		geodesic[3].link[5] = geodesicData::nolink;
+		geodesic[4].link[0] = 0;
+		geodesic[4].link[1] = 2;
+		geodesic[4].link[2] = 8;
+		geodesic[4].link[3] = 10;
+		geodesic[4].link[4] = 3;
+		geodesic[4].link[5] = geodesicData::nolink;
+		geodesic[5].link[0] = 0;
+		geodesic[5].link[1] = 1;
+		geodesic[5].link[2] = 7;
+		geodesic[5].link[3] = 9;
+		geodesic[5].link[4] = 2;
+		geodesic[5].link[5] = geodesicData::nolink;
+		geodesic[6].link[0] = 11;
+		geodesic[6].link[1] = 7;
+		geodesic[6].link[2] = 1;
+		geodesic[6].link[3] = 3;
+		geodesic[6].link[4] = 10;
+		geodesic[6].link[5] = geodesicData::nolink;
+		geodesic[7].link[0] = 11;
+		geodesic[7].link[1] = 9;
+		geodesic[7].link[2] = 5;
+		geodesic[7].link[3] = 1;
+		geodesic[7].link[4] = 6;
+		geodesic[7].link[5] = geodesicData::nolink;
+		geodesic[8].link[0] = 11;
+		geodesic[8].link[1] = 10;
+		geodesic[8].link[2] = 4;
+		geodesic[8].link[3] = 2;
+		geodesic[8].link[4] = 9;
+		geodesic[8].link[5] = geodesicData::nolink;
+		geodesic[9].link[0] = 11;
+		geodesic[9].link[1] = 8;
+		geodesic[9].link[2] = 2;
+		geodesic[9].link[3] = 5;
+		geodesic[9].link[4] = 7;
+		geodesic[9].link[5] = geodesicData::nolink;
+		geodesic[10].link[0] = 11;
+		geodesic[10].link[1] = 6;
+		geodesic[10].link[2] = 3;
+		geodesic[10].link[3] = 4;
+		geodesic[10].link[4] = 8;
+		geodesic[10].link[5] = geodesicData::nolink;
+		geodesic[11].link[0] = 6;
+		geodesic[11].link[1] = 10;
+		geodesic[11].link[2] = 8;
+		geodesic[11].link[3] = 9;
+		geodesic[11].link[4] = 7;
+		geodesic[11].link[5] = geodesicData::nolink;
+		
+		for ( int i = 0; i < 12; ++i )
+			geodesic[i].region = i;
+			
 		iterationsCurrent = 0;
 		cellsCurrent = 12;
 	}

@@ -3,48 +3,40 @@
 #include "basedata.hpp"
 #include "serialize.hpp"
 
-int zw::loadBaseData( const int iteration,
-                      std::unique_ptr<math::vector[]> &vertices, vertex_size_t &sizeNeeded,
+int zw::loadBaseData( const int iterationsNeeded,
+                      std::unique_ptr<geodesicData[]> &data, cell_size_t &sizeNeeded,
                       const bool pretend )
 {
-	auto cellsNeeded = cellsPerIteration( iteration );
+	auto cellsNeeded = cellsPerIteration( iterationsNeeded );
 	
 	if ( !pretend )
 		assert(	cellsNeeded <= sizeNeeded );
 	else
 		sizeNeeded = cellsNeeded;
 		
-	serialize::input fileVertices( "base_vertices.dat" );
+	std::stringstream fileName;
+	fileName << "geodesic_" << iterationsNeeded << ".dat";
+	serialize::input dataFile( fileName.str() );
 	
-	if ( fileVertices.exists() )
+	if ( dataFile.exists() )
 	{
-		auto iterationsCurrent = fileVertices.read<int>();
+		auto cellsCurrent = dataFile.read<cell_size_t>();
 		
-		if ( iterationsCurrent > iteration )
-			iterationsCurrent = iteration;
-			
-		std::stringstream linkFile;
-		linkFile << "base_links_" << iterationsCurrent << ".dat";
-		serialize::input fileLinks( linkFile.str() );
-		
-		if ( fileLinks.exists() )
+		if ( cellsCurrent == cellsNeeded )
 		{
-			auto cellsCurrent = fileLinks.read<vertex_size_t>();
-			
-			if ( cellsCurrent == cellsPerIteration( iterationsCurrent ) )
+			if ( !pretend )
 			{
-				if ( !pretend )
+				for ( zw::cell_size_t i = 0; i < cellsCurrent; ++i )
 				{
-					for ( zw::vertex_size_t i = 0; i < cellsCurrent; ++i )
-					{
-						fileVertices.read( vertices[i].x );
-						fileVertices.read( vertices[i].y );
-						fileVertices.read( vertices[i].z );
-					}
+					dataFile.read( data[i].link, 6 );
+					dataFile.read( data[i].v.x );
+					dataFile.read( data[i].v.y );
+					dataFile.read( data[i].v.z );
+					dataFile.read( data[i].region );
 				}
-				
-				return iterationsCurrent;
 			}
+			
+			return iterationsNeeded;
 		}
 	}
 	

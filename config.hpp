@@ -31,31 +31,13 @@ namespace zw
 	using u64_t = std::uint_fast64_t;
 #endif
 #if SUBDIVIDE_LIMIT <= 2
-	using vertex_size_t = u8_t;
-	using region_size_t = u8_t;
 	using cell_size_t = u8_t;
 #elif SUBDIVIDE_LIMIT <= 6
-	using vertex_size_t = u16_t;
-	using region_size_t = u8_t;
-	using cell_size_t = u8_t;
+	using cell_size_t = u16_t;
 #elif SUBDIVIDE_LIMIT <= 14
-	using vertex_size_t = u32_t;
-	using region_size_t = u16_t;
-#	if SUBDIVIDE_LIMIT <= 10
-	using cell_size_t = u8_t;
-#	else
-	using cell_size_t = u16_t;
-#	endif
-#elif SUBDIVIDE_LIMIT <= 30
-	using vertex_size_t = u64_t;
-	using region_size_t = u32_t;
-#	if SUBDIVIDE_LIMIT <= 18
-	using cell_size_t = u8_t;
-#	elif SUBDIVIDE_LIMIT <= 22
-	using cell_size_t = u16_t;
-#	else
 	using cell_size_t = u32_t;
-#	endif
+#elif SUBDIVIDE_LIMIT <= 30
+	using cell_size_t = u64_t;
 	static_assert( sizeof( std::size_t ) >= 8,
 	               "SUBDIVIDE_LIMIT does not support values over 14." );
 #else
