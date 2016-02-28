@@ -3,7 +3,8 @@
 
 #include "basedata.hpp"
 #include "monomap.hpp"
-#include "ezOptionParser.hpp"
+
+#include "lib/ezOptionParser.hpp"
 
 void Usage( ez::ezOptionParser &opt )
 {

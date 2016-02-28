@@ -5,9 +5,8 @@
 #include <string>
 
 #include "config.hpp"
-#include "stb_image_write.h"
 
-#include <iostream>
+#include "lib/stb_image_write.h"
 
 namespace zw
 {

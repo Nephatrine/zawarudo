@@ -108,10 +108,10 @@ endif()
 set(SUBDIVIDE_HEADERS
 	"${PROJECT_SOURCE_DIR}/basedata.hpp"
 	"${PROJECT_SOURCE_DIR}/config.hpp"
-	"${PROJECT_SOURCE_DIR}/ezOptionParser.hpp"
+	"${PROJECT_SOURCE_DIR}/lib/ezOptionParser.hpp"
+	"${PROJECT_SOURCE_DIR}/lib/stb_image_write.h"
 	"${PROJECT_SOURCE_DIR}/monomap.hpp"
 	"${PROJECT_SOURCE_DIR}/serialize.hpp"
-	"${PROJECT_SOURCE_DIR}/stb_image_write.h"
 	"${PROJECT_SOURCE_DIR}/vector.hpp")
 set(SUBDIVIDE_SOURCE
 	"${PROJECT_SOURCE_DIR}/basedata.cpp"
