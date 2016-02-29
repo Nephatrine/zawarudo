@@ -1,8 +1,11 @@
 #ifndef VECTOR_HPP
 #define VECTOR_HPP
 
+// C Standard Library
 #include <cassert>
 #include <cmath>
+
+// C++ STL
 #include <ostream>
 
 #define DEG2RAD(x) ((x) * 3.1415926535897932384626433832795 / 180.0)
@@ -45,7 +48,6 @@ namespace math
 		
 		real_t latitude() const
 		{
-//			return RAD2DEG(std::asin( z / magnitude() ));
 			return RAD2DEG( std::atan2( z, std::sqrt( x * x + y * y ) ) );
 		}
 		
@@ -64,11 +66,11 @@ namespace math
 			return vector( y * v.z - z * v.y, z * v.x - x * v.z, x * v.y - y * v.x );
 		}
 		
-		vector normalize() const
+		vector &normalize()
 		{
 			real_t m = magnitude();
 			assert( m != 0 );
-			return vector( *this ) /= m;
+			return ( *this ) /= m;
 		}
 		
 		// Operators

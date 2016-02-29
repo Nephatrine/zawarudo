@@ -1,7 +1,15 @@
 #ifndef CONFIG_HPP
 #define CONFIG_HPP
 
+// C Standard Library
+#include <cassert>
+#include <cmath>
 #include <cstdint>
+
+// C++ STL
+#include <iostream>
+#include <limits>
+#include <memory>
 
 // ------------
 // User Options
