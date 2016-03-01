@@ -1,28 +1,26 @@
-#ifndef BASEDATA_HPP
-#define BASEDATA_HPP
+#ifndef GEODESIC_HPP
+#define GEODESIC_HPP
 
-#include <limits>
-#include <memory>
-
+// ZaWarudo Headers
 #include "config.hpp"
+
+// Utility Headers
 #include "vector.hpp"
+
+// If you change this, make sure to change region_t if needed to fit.
+#define REGION_LIMIT 10242
 
 namespace zw
 {
-	//
-	// GCC5 Linux x86_64:
-	//
-	// SPACE_SAVING 0 - 80 Bytes
-	// SPACE_SAVING 1 - 56 Bytes
-	// SPACE_SAVING 2 - 40 Bytes
-	//
-	struct geodesicData
+	using region_t = u16_t;
+	
+	struct geoData
 	{
-		geodesicData()
-			: link {0, 0, 0, 0, 0, 0}, region( 12 )
-		{}
+		geoData() = default;
+		geoData( const geoData & ) = default;
+		geoData &operator=( const geoData & ) = default;
 		
-		cell_size_t counterClockwise( int spoke )
+		cell_size_t prevNeighbor( int spoke )
 		{
 			if ( spoke == 0 )
 				return link[5] == nolink ? link[4] : link[5];
@@ -30,7 +28,7 @@ namespace zw
 				return link[spoke - 1];
 		}
 		
-		cell_size_t clockwise( int spoke )
+		cell_size_t nextNeighbor( int spoke )
 		{
 			if ( spoke == 5 || link[spoke + 1] == nolink )
 				return link[0];
@@ -40,8 +38,15 @@ namespace zw
 		
 		cell_size_t link[6];
 		math::vector v;
-		u8_t region;
+		region_t region;
 		
+		static void subdivide( std::unique_ptr<geoData[]> &data, cell_size_t &extant );
+		static void icosahedron( std::unique_ptr<geoData[]> &data,
+		                         cell_size_t &extant );
+		static bool load( std::unique_ptr<geoData[]> &data, const cell_size_t size,
+		                  const std::string &file );
+		static void save( std::unique_ptr<geoData[]> &data, const cell_size_t size,
+		                  const std::string &file );
 		static const cell_size_t nolink = std::numeric_limits<cell_size_t>::max();
 	};
 	
@@ -57,18 +62,6 @@ namespace zw
 		return ( iteration < 0 ) ? 0 : ( iteration == 0 ) ? 12 :
 		       cellsPerIterationRecurse( 0, iteration, 12, 20 );
 	}
-	
-	constexpr int regionalIterations( const int iterations )
-	{
-		return ( iterations <= 2 ) ? 0 : ( iterations <= 6 ) ? 2 :
-		       ( iterations <= 14 ) ? 6 : 14;
-	}
-	
-	int loadBaseData( const int iterationsNeeded,
-	                  std::unique_ptr<geodesicData[]> &data, cell_size_t &sizeNeeded,
-	                  const bool pretend = false );
-	void saveBaseData( const int iterationsCurrent,
-	                   std::unique_ptr<geodesicData[]> &data, const cell_size_t cellsCurrent );
 }
 
 #endif

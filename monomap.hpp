@@ -14,10 +14,10 @@ namespace zw
 	struct monomap
 	{
 		monomap()
-			: data {0}, min( 0 ), max( 255 ), offset( 64 )
+			: data {0}, offset( 64 ), min( 0 ), max( 255 )
 		{}
 		
-		void setPixel( const real_t lat, const real_t lon, const unsigned char value )
+		void setPixel( const real_t lat, const real_t lon, const unsigned value )
 		{
 			int x = ( lon + 180.0 ) / 360.0 * ( X - 1 );
 			int y = ( 180.0 - ( lat + 90.0 ) ) / 180.0 * ( Y - 1 );
@@ -124,10 +124,8 @@ namespace zw
 			                reinterpret_cast<const void *>( data ), 0 );
 		}
 		
-		unsigned char data[X *Y];
-		unsigned char min;
-		unsigned char max;
-		unsigned char offset;
+		unsigned char data[X *Y], offset;
+		unsigned min, max;
 	};
 }
 
