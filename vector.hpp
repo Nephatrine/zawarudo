@@ -8,10 +8,6 @@
 // C++ STL
 #include <ostream>
 
-#define DEG2RAD(x) ((x) * 3.1415926535897932384626433832795 / 180.0)
-#define RAD2DEG(x) ((x) / 3.1415926535897932384626433832795 * 180.0)
-#define PI 3.1415926535897932384626433832795
-
 namespace math
 {
 #ifdef MATH_REAL_T
@@ -44,16 +40,6 @@ namespace math
 		real_t dotProduct( const vector &v ) const
 		{
 			return x * v.x + y * v.y + z * v.z;
-		}
-		
-		real_t latitude() const
-		{
-			return RAD2DEG( std::atan2( z, std::sqrt( x * x + y * y ) ) );
-		}
-		
-		real_t longitude() const
-		{
-			return RAD2DEG( std::atan2( y, x ) );
 		}
 		
 		real_t magnitude() const
@@ -123,15 +109,6 @@ namespace math
 	inline vector operator-( const vector &a, const vector &b ) {return vector( a ) -= b;}
 	inline vector operator*( const vector &v, const real_t s ) {return vector( v ) *= s;}
 	inline vector operator/( const vector &v, const real_t s ) {return vector( v ) /= s;}
-	
-	// Lat/Long
-	inline vector LLC2VEC( const real_t lat, const real_t lon,
-	                       const real_t radius = 1.0 )
-	{
-		return vector( std::cos( DEG2RAD( lat ) ) * std::cos( DEG2RAD( lon ) ),
-		               std::cos( DEG2RAD( lat ) ) * std::sin( DEG2RAD( lon ) ),
-		               std::sin( DEG2RAD( lat ) ) ) * radius;
-	}
 	
 	inline std::ostream &operator<<( std::ostream &s, const vector &v )
 	{

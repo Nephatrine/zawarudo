@@ -110,12 +110,13 @@ set(ZAWARUDO_HEADERS
 	"${PROJECT_SOURCE_DIR}/lib/ezOptionParser.hpp"
 	"${PROJECT_SOURCE_DIR}/lib/stb_image_write.h"
 	"${PROJECT_SOURCE_DIR}/geodesic.hpp"
-	"${PROJECT_SOURCE_DIR}/monomap.hpp"
+	"${PROJECT_SOURCE_DIR}/image.hpp"
+	"${PROJECT_SOURCE_DIR}/map.hpp"
 	"${PROJECT_SOURCE_DIR}/serialize.hpp"
 	"${PROJECT_SOURCE_DIR}/vector.hpp")
 set(ZAWARUDO_SOURCE
 	"${PROJECT_SOURCE_DIR}/geodesic.cpp"
-	"${PROJECT_SOURCE_DIR}/monomap.cpp"
+	"${PROJECT_SOURCE_DIR}/image.cpp"
 	"${PROJECT_SOURCE_DIR}/zawarudo.cpp")
 add_executable(zawarudo ${ZAWARUDO_SOURCE} ${ZAWARUDO_HEADERS})
 

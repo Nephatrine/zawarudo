@@ -1,6 +1,7 @@
 // ZaWarudo Headers
 #include "geodesic.hpp"
-#include "monomap.hpp"
+#include "image.hpp"
+#include "map.hpp"
 
 // Third-Party Headers
 #include "lib/ezOptionParser.hpp"
@@ -34,6 +35,10 @@ int main( int argc, const char *argv[] )
 	opt.add( "",      0, 1, 0, "Filename slug for loaded files.", "--base" );
 	opt.add( "world", 0, 1, 0, "Filename slug for generated files.", "-o",
 	         "--out" );
+	opt.add( "equirect", 0, 1, 0, "Map type to generate. [equirect]", "-m",
+	         "--map" );
+	opt.add( "",         0, 1, 0,
+	         "Standard parallel in degrees (if applies to projection).", "--parallel" );
 	opt.parse( argc, argv );
 	
 	if ( opt.isSet( "-h" ) )
@@ -97,6 +102,21 @@ int main( int argc, const char *argv[] )
 	else
 		nameIn = nameOut;
 		
+	std::string mapType;
+	opt.get( "-m" )->getString( mapType );
+	
+	float parallel = 0;
+	
+	if ( opt.isSet( "--parallel" ) )
+		opt.get( "--parallel" )->getFloat( parallel );
+		
+	if ( parallel < 0 || parallel >= 90 )
+	{
+		std::cerr << "Standard parallel must be within range 0 <= SP < 90." <<
+		          std::endl;
+		return 1;
+	}
+	
 	//
 	// Allocate Memory
 	//
@@ -162,6 +182,7 @@ int main( int argc, const char *argv[] )
 	{
 		std::stringstream fileOut;
 		fileOut << nameOut << "_" << iterations << ".dat";
+		std::cout << "saving geodesic " << fileOut.str() << std::endl;
 		geoData::save( geodesic, cells, fileOut.str() );
 	}
 	
@@ -170,16 +191,33 @@ int main( int argc, const char *argv[] )
 	// Right now this is one of the few ways to visualize the output so far.
 	//
 	
-	std::cout << "Saving Regional Map" << std::endl;
-	monomap<768, 512> mapRegion;
-	mapRegion.max = std::min( cells, ( cell_size_t )REGION_LIMIT );
+	//
+	// Create Maps
+	//
+	
+	std::unique_ptr<map::project::base> projection;
+	
+	if ( mapType == "geographic" || mapType == "plate-carree" )
+		projection = std::unique_ptr<map::project::base>( new
+		             map::project::equirectangular( 0 ) );
+	else
+		projection = std::unique_ptr<map::project::base>( new
+		             map::project::equirectangular( DEG2RAD( parallel ) ) );
+		             
+	image::greyscale regionalMap( projection->aspect(), 768, 512 );
+	regionalMap.range( 0, std::min<float>( cells, REGION_LIMIT - 1.0 ) );
 	
 	for ( cell_size_t c = 0; c < cells; ++c )
-		mapRegion.setPixel( geodesic[c].v.latitude(), geodesic[c].v.longitude(),
-		                    geodesic[c].region );
-		                    
-	mapRegion.fill();
-	mapRegion.write( "regions.png" );
+		regionalMap.plot( projection->point( map::geoCoord( geodesic[c].v ) ),
+		                  geodesic[c].region );
+		                  
+	{
+		std::stringstream fileMap;
+		fileMap << nameOut << "_" << iterations << "_region.png";
+		std::cout << "saving map " << fileMap.str() << std::endl;
+		regionalMap.fill();
+		regionalMap.write( fileMap.str() );
+	}
 	
 	return 0;
 }
