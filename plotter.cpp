@@ -1,21 +1,16 @@
-// C++ STL
-#include <memory>
+#include "plotter.hpp"
 
-// Utility Headers
-#include "image.hpp"
-
-// Third-Party Headers
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_STATIC
 #include "lib/stb_image_write.h"
 
-void image::greyscale::write( const std::string &file ) const
+void zw::plotter::gs::write( const std::string &file ) const
 {
 	stbi_write_png( file.c_str(), X, Y, 1, reinterpret_cast<const void *>( data ),
 	                0 );
 }
 
-void image::greyscale::fill()
+void zw::plotter::gs::fill()
 {
 	auto newdata = std::unique_ptr<unsigned char[]>( new unsigned char[X * Y] );
 	int unfilled = -1;

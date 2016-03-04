@@ -21,6 +21,15 @@
 #define SPACE_SAVING 2
 #define SUBDIVIDE_LIMIT 14
 
+// ------
+// Macros
+//
+#ifndef M_PI
+#	define M_PI 3.1415926535897932384626433832795
+#endif
+#define DEG2RAD(d) ((d) * M_PI / 180.0)
+#define RAD2DEG(r) ((r) / M_PI * 180.0)
+
 // ----------
 // Data Types
 // Yes, this is a little insane. This eats up a good chunk of memory though so
@@ -53,7 +62,6 @@ namespace zw
 #	error "SUBDIVIDE_LIMIT does not support values over 30."
 #endif
 	
-#define MATH_REAL_T zw::real_t
 #if SPACE_SAVING == 2
 	using real_t = float;
 #else

@@ -1,7 +1,7 @@
 // ZaWarudo Headers
 #include "geodesic.hpp"
-#include "image.hpp"
-#include "map.hpp"
+#include "plotter.hpp"
+#include "projection.hpp"
 
 // Third-Party Headers
 #include "lib/ezOptionParser.hpp"
@@ -26,19 +26,22 @@ int main( int argc, const char *argv[] )
 	opt.syntax = "zawarudo [OPTIONS] -i [ITERATIONS]";
 	opt.footer =
 	    "\nCopyright (C) 2016 Daniel Wolf\nThis program is free and without warranty.\n\n";
-	opt.add( "",      0, 0, 0, "Display usage instructions and exit.", "-h",
+	opt.add( "", 0, 0, 0, "Display usage instructions and exit.", "-h",
 	         "--help" );
-	opt.add( "",      0, 0, 0, "Regenerate geodesic data from scratch.", "-f",
+	opt.add( "", 0, 0, 0, "Regenerate geodesic data from scratch.", "-f",
 	         "--force" );
-	opt.add( "",      1, 1, 0, "Number of times to subdivide icosahedron.", "-i",
-	         "--subdivide" );
-	opt.add( "",      0, 1, 0, "Filename slug for loaded files.", "--base" );
-	opt.add( "world", 0, 1, 0, "Filename slug for generated files.", "-o",
-	         "--out" );
-	opt.add( "equirect", 0, 1, 0, "Map type to generate. [equirect]", "-m",
-	         "--map" );
-	opt.add( "",         0, 1, 0,
-	         "Standard parallel in degrees (if applies to projection).", "--parallel" );
+	         
+	// Geodesic Options
+	opt.add( "", 1, 1, 0, "[#] Icosahedron Subdivisions", "-i", "--subdivide" );
+	opt.add( "", 0, 1, 0, "[STRING] Slug Of Alternate World To Load", "--base" );
+	opt.add( "world", 0, 1, 0, "[STRING] World Filename Slug", "-w", "--world" );
+	
+	// Mapping Options
+	opt.add( "equirectangular", 0, 1, 0, "[STRING] Map -> Projection\n  "
+	         "equirectangular - Equirectangular\n  "
+	         "plate-carree    - Equirectangular (Parallel 0)", "-m", "--map" );
+	opt.add( "0.0", 0, 1, 0, "[DEGREES] Map -> Standard Parallel", "--parallel" );
+	opt.add( "0.0", 0, 1, 0, "[DEGREES] Map -> Prime Meridian", "--meridian" );
 	opt.parse( argc, argv );
 	
 	if ( opt.isSet( "-h" ) )
@@ -95,7 +98,7 @@ int main( int argc, const char *argv[] )
 	}
 	
 	std::string nameIn, nameOut;
-	opt.get( "-o" )->getString( nameOut );
+	opt.get( "-w" )->getString( nameOut );
 	
 	if ( opt.isSet( "--base" ) )
 		opt.get( "--base" )->getString( nameIn );
@@ -105,17 +108,20 @@ int main( int argc, const char *argv[] )
 	std::string mapType;
 	opt.get( "-m" )->getString( mapType );
 	
-	float parallel = 0;
+	real_t parallel = 0;
+	real_t meridian = 0;
 	
-	if ( opt.isSet( "--parallel" ) )
-		opt.get( "--parallel" )->getFloat( parallel );
-		
+	opt.get( "--parallel" )->getFloat( parallel );
+	opt.get( "--meridian" )->getFloat( meridian );
+	
 	if ( parallel < 0 || parallel >= 90 )
 	{
 		std::cerr << "Standard parallel must be within range 0 <= SP < 90." <<
 		          std::endl;
 		return 1;
 	}
+	
+	std::cout << "parsed options" << std::endl;
 	
 	//
 	// Allocate Memory
@@ -187,36 +193,32 @@ int main( int argc, const char *argv[] )
 	}
 	
 	//
-	// Write Regional Map
-	// Right now this is one of the few ways to visualize the output so far.
-	//
-	
-	//
 	// Create Maps
 	//
 	
-	std::unique_ptr<map::project::base> projection;
+	std::unique_ptr<projection::base> mapView;
 	
-	if ( mapType == "geographic" || mapType == "plate-carree" )
-		projection = std::unique_ptr<map::project::base>( new
-		             map::project::equirectangular( 0 ) );
+	if ( mapType == "plate-carree" )
+		mapView = std::unique_ptr<projection::base>( new projection::equirectangular(
+		              0 ) );
 	else
-		projection = std::unique_ptr<map::project::base>( new
-		             map::project::equirectangular( DEG2RAD( parallel ) ) );
-		             
-	image::greyscale regionalMap( projection->aspect(), 768, 512 );
-	regionalMap.range( 0, std::min<float>( cells, REGION_LIMIT - 1.0 ) );
+		mapView = std::unique_ptr<projection::base>( new projection::equirectangular(
+		              DEG2RAD( parallel ) ) );
+		              
+	mapView->meridian( DEG2RAD( meridian ) );
+	
+	plotter::gs mapRegion( mapView->aspect(), 768, 512 );
+	mapRegion.inputRange( 0, std::min<real_t>( cells, REGION_LIMIT - 1.0 ) );
 	
 	for ( cell_size_t c = 0; c < cells; ++c )
-		regionalMap.plot( projection->point( map::geoCoord( geodesic[c].v ) ),
-		                  geodesic[c].region );
-		                  
+		mapRegion.plot( mapView->convert( geodesic[c].v ), geodesic[c].region );
+		
 	{
 		std::stringstream fileMap;
 		fileMap << nameOut << "_" << iterations << "_region.png";
 		std::cout << "saving map " << fileMap.str() << std::endl;
-		regionalMap.fill();
-		regionalMap.write( fileMap.str() );
+		mapRegion.fill();
+		mapRegion.write( fileMap.str() );
 	}
 	
 	return 0;

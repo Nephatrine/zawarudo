@@ -1,34 +1,21 @@
 #ifndef VECTOR_HPP
 #define VECTOR_HPP
 
-// C Standard Library
-#include <cassert>
-#include <cmath>
+#include "config.hpp"
 
-// C++ STL
-#include <ostream>
-
-namespace math
+namespace zw
 {
-#ifdef MATH_REAL_T
-	using real_t = MATH_REAL_T;
-#else
-	using real_t = double;
-#endif
-	
 	struct vector
 	{
 		// Constructors
 		
-		vector( const vector & ) = default;
-		
-		vector()
-			: x( 0 ), y( 0 ), z( 0 )
-		{}
+		vector(): vector( 0, 0, 0 ) {}
 		
 		vector( const real_t x2, const real_t y2, const real_t z2 )
 			: x( x2 ), y( y2 ), z( z2 )
 		{}
+		
+		vector( const vector & ) = default;
 		
 		// Functions
 		
@@ -62,11 +49,7 @@ namespace math
 		// Operators
 		
 		vector &operator=( const vector & ) = default;
-		
-		vector operator-() const
-		{
-			return vector( -x, -y, -z );
-		}
+		vector operator-() const {return vector( -x, -y, -z );}
 		
 		vector &operator+=( const vector &v )
 		{

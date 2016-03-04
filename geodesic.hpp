@@ -37,7 +37,7 @@ namespace zw
 		}
 		
 		cell_size_t link[6];
-		math::vector v;
+		vector v;
 		region_t region;
 		
 		static void subdivide( std::unique_ptr<geoData[]> &data, cell_size_t &extant );
