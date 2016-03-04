@@ -44,7 +44,7 @@ namespace zw
 			
 			point convert( const coord &c ) const
 			{
-				return point( ( px( coord( zm( c.lon ), c.lat ) ) - xn() ) / width(),
+				return point( ( px( coord( zm( c.lon ), -c.lat ) ) - xn() ) / width(),
 				              ( py( c ) - yn() ) / height() );
 			}
 			
@@ -60,12 +60,12 @@ namespace zw
 			
 		protected:
 			virtual real_t px( const coord &c ) const {return c.lon;}
-			virtual real_t py( const coord &c ) const {return -c.lat;}
+			virtual real_t py( const coord &c ) const {return c.lat;}
 			
 			virtual real_t xn() const {return px( coord( min.x, 0 ) );}
 			virtual real_t xx() const {return px( coord( max.x, 0 ) );}
-			virtual real_t yn() const {return py( coord( 0, max.y ) );}
-			virtual real_t yx() const {return py( coord( 0, min.y ) );}
+			virtual real_t yn() const {return py( coord( 0, -max.y ) );}
+			virtual real_t yx() const {return py( coord( 0, -min.y ) );}
 			
 			virtual real_t zm( real_t lon ) const
 			{
@@ -105,6 +105,29 @@ namespace zw
 			}
 			
 			real_t std_p;
+		};
+		
+		class mercator: public base
+		{
+		public:
+		
+			// Constructor
+			
+			mercator()
+				: base()
+			{
+				real_t maxlat = 2.0 * std::atan( std::exp( M_PI ) ) - M_PI / 2.0;
+				min.y = -maxlat;
+				max.y = maxlat;
+			}
+			
+			virtual ~mercator() {}
+			
+		protected:
+			virtual real_t py( const coord &c ) const
+			{
+				return std::log( std::tan( M_PI / 4.0 + c.lat / 2.0 ) );
+			}
 		};
 	}
 }

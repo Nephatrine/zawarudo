@@ -39,6 +39,7 @@ int main( int argc, const char *argv[] )
 	// Mapping Options
 	opt.add( "equirectangular", 0, 1, 0, "[STRING] Map -> Projection\n  "
 	         "equirectangular - Equirectangular\n  "
+	         "mercator        - Mercator\n  "
 	         "plate-carree    - Equirectangular (Parallel 0)", "-m", "--map" );
 	opt.add( "0.0", 0, 1, 0, "[DEGREES] Map -> Standard Parallel", "--parallel" );
 	opt.add( "0.0", 0, 1, 0, "[DEGREES] Map -> Prime Meridian", "--meridian" );
@@ -121,8 +122,6 @@ int main( int argc, const char *argv[] )
 		return 1;
 	}
 	
-	std::cout << "parsed options" << std::endl;
-	
 	//
 	// Allocate Memory
 	//
@@ -198,7 +197,9 @@ int main( int argc, const char *argv[] )
 	
 	std::unique_ptr<projection::base> mapView;
 	
-	if ( mapType == "plate-carree" )
+	if ( mapType == "mercator" )
+		mapView = std::unique_ptr<projection::base>( new projection::mercator() );
+	else if ( mapType == "plate-carree" )
 		mapView = std::unique_ptr<projection::base>( new projection::equirectangular(
 		              0 ) );
 	else
