@@ -129,6 +129,55 @@ namespace zw
 				return std::log( std::tan( M_PI / 4.0 + c.lat / 2.0 ) );
 			}
 		};
+		
+		class stereographic: public base
+		{
+		public:
+		
+			// Constructor
+			
+			stereographic( const real_t scale )
+				: base(), m( scale )
+			{}
+			
+			virtual ~stereographic() {}
+			
+			// Functions
+			
+			void scale( const real_t s ) {m = s;}
+			
+		protected:
+			virtual real_t px( const coord &c ) const
+			{
+				return c.lon / std::sqrt( m );
+			}
+			
+			virtual real_t py( const coord &c ) const
+			{
+				return ( 1.0 + std::sqrt( m ) / m ) * std::tan( c.lat / 2.0 );
+			}
+			
+			real_t m;
+		};
+		
+		class miller: public base
+		{
+		public:
+		
+			// Constructor
+			
+			miller()
+				: base()
+			{}
+			
+			virtual ~miller() {}
+			
+		protected:
+			virtual real_t py( const coord &c ) const
+			{
+				return 5.0 / 4.0 * std::log( std::tan( M_PI / 4.0 + 2.0 * c.lat / 5.0 ) );
+			}
+		};
 	}
 }
 

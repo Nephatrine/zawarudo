@@ -38,9 +38,12 @@ int main( int argc, const char *argv[] )
 	
 	// Mapping Options
 	opt.add( "equirectangular", 0, 1, 0, "[STRING] Map -> Projection\n  "
-	         "equirectangular - Equirectangular\n  "
+	         "braun-stereo    - Braun Stereographic\n  "
+	         "equirectangular - Equirectangular (SP X)\n  "
+	         "gall-stereo     - Gall Stereographic\n  "
 	         "mercator        - Mercator\n  "
-	         "plate-carree    - Equirectangular (Parallel 0)", "-m", "--map" );
+	         "miller-cyl      - Miller Cylindrical\n  "
+	         "plate-carree    - Plate Caree", "-m", "--map" );
 	opt.add( "0.0", 0, 1, 0, "[DEGREES] Map -> Standard Parallel", "--parallel" );
 	opt.add( "0.0", 0, 1, 0, "[DEGREES] Map -> Prime Meridian", "--meridian" );
 	opt.parse( argc, argv );
@@ -146,6 +149,7 @@ int main( int argc, const char *argv[] )
 	
 	cell_size_t generated = 0;
 	int pass = -1;
+	bool sav = false;
 	
 	if ( !forceRegen )
 	{
@@ -164,6 +168,7 @@ int main( int argc, const char *argv[] )
 	{
 		geoData::icosahedron( geodesic, generated );
 		std::cout << "loaded icosahedron" << std::endl;
+		sav = true;
 		++pass;
 	}
 	
@@ -184,6 +189,7 @@ int main( int argc, const char *argv[] )
 	// Output Geodesic
 	//
 	
+	if ( sav == true )
 	{
 		std::stringstream fileOut;
 		fileOut << nameOut << "_" << iterations << ".dat";
@@ -197,8 +203,16 @@ int main( int argc, const char *argv[] )
 	
 	std::unique_ptr<projection::base> mapView;
 	
-	if ( mapType == "mercator" )
+	if ( mapType == "braun-stereo" )
+		mapView = std::unique_ptr<projection::base>( new projection::stereographic(
+		              1 ) );
+	else if ( mapType == "gall-stereo" )
+		mapView = std::unique_ptr<projection::base>( new projection::stereographic(
+		              2 ) );
+	else if ( mapType == "mercator" )
 		mapView = std::unique_ptr<projection::base>( new projection::mercator() );
+	else if ( mapType == "miller-cyl" )
+		mapView = std::unique_ptr<projection::base>( new projection::miller() );
 	else if ( mapType == "plate-carree" )
 		mapView = std::unique_ptr<projection::base>( new projection::equirectangular(
 		              0 ) );
