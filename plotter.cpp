@@ -14,11 +14,13 @@ void zw::plotter::gs::fill()
 {
 	auto newdata = std::unique_ptr<unsigned char[]>( new unsigned char[X * Y] );
 	int unfilled = -1;
+	int oldcount = 0;
 	int d, t;
 	size_t p;
 	
-	while ( unfilled != 0 )
+	while ( unfilled != oldcount )
 	{
+		oldcount = unfilled;
 		unfilled = 0;
 		
 		for ( int x = 0; x < X; ++x )
@@ -27,56 +29,61 @@ void zw::plotter::gs::fill()
 				p = x + y * X;
 				d = t = 0;
 				
-				if ( data[p] )
+				if ( data[p] != c_z )
 				{
 					newdata[p] = data[p];
 					continue;
 				}
 				
-				if ( x > 0 && data[p - 1] )
+				if ( x > 0 && data[p - 1] != c_z && data[p - 1] != c_s )
 				{
 					t += data[p - 1];
 					++d;
 				}
-				else if ( x == 0 && data[p + X - 1] )
+				else if ( x == 0 && data[p + X - 1] != c_z && data[p + X - 1] != c_s )
 				{
 					t += data[p + X - 1];
 					++d;
 				}
 				
-				if ( x < X - 1 && data[p + 1] )
+				if ( x < X - 1 && data[p + 1] != c_z && data[p + 1] != c_s )
 				{
 					t += data[p + 1];
 					++d;
 				}
-				else if ( x == X - 1 && data[p - X + 1] )
+				else if ( x == X - 1 && data[p - X + 1] != c_z && data[p - X + 1] != c_s )
 				{
 					t += data[p - X + 1];
 					++d;
 				}
 				
-				if ( y > 0 && data[p - X] )
+				if ( y > 0 && data[p - X] != c_z && data[p - X] != c_s )
 				{
 					t += data[p - X];
 					++d;
 				}
 				
-				if ( y < Y - 1 && data[p + X] )
+				if ( y < Y - 1 && data[p + X] != c_z && data[p + X] != c_s )
 				{
 					t += data[p + X];
 					++d;
 				}
 				
 				if ( d > 0 )
+				{
 					newdata[p] = t / d;
+					
+					while ( newdata[p] == c_z || newdata[p] == c_s )
+						newdata[p] -= 1;
+				}
 				else
 				{
-					newdata[p] = 0;
+					newdata[p] = c_z;
 					++unfilled;
 				}
 			}
 			
-		for ( int i = 0; i < p; ++i )
+		for ( int i = 0; i <= p; ++i )
 			data[i] = newdata[i];
 	}
 }
