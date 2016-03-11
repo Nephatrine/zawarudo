@@ -102,6 +102,21 @@ namespace zw
 						data[x + y * X] = color;
 			}
 			
+			void bold( const point &p, const unsigned char color )
+			{
+				int minX = p.x * ( X - 1 ) - 1;
+				int minY = p.y * ( Y - 1 ) - 1;
+				int maxX = minX + 3;
+				int maxY = minY + 3;
+				
+				for ( int x = minX; x < maxX; ++x )
+					for ( int y = minY; y < maxY; ++y )
+						if ( x >= 0 && x < X && y >= 0 && y < Y )
+							if ( data != nullptr )
+								data[x + y * X] = color;
+								
+			}
+			
 			void fill();
 			
 			void write( const std::string &file ) const;
