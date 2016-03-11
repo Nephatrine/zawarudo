@@ -3,6 +3,7 @@
 
 #include "coord.hpp"
 #include "point.hpp"
+#include "plotter.hpp"
 
 namespace zw
 {
@@ -35,6 +36,7 @@ namespace zw
 			real_t width() const {return xx() - xn();}
 			real_t height() const {return yx() - yn();}
 			real_t aspect() const {return width() / height();}
+			real_t meridian() const {return meridian_;}
 			
 			void meridian( const real_t radians )
 			{
@@ -60,14 +62,53 @@ namespace zw
 				              ( py( c ) - yn() ) / height() );
 			}
 			
-			point convert( const vector &v ) const
+			point convert( vector v ) const
 			{
-				return convert( coord( v ) );
+				if ( v.magnitude() == 0 )
+					std::cout << v << std::endl;
+					
+				return convert( coord( v.normalize() ) );
 			}
 			
 			bool valid( const coord &c ) const
 			{
 				return pc( coord( zm( c.lon ), -c.lat ) ) >= 0;
+			}
+			
+			// Mapping
+			
+			void drawBorder( plotter::gs &map, unsigned char color = 1 ) const
+			{
+				for ( int spin = -900; spin < 900; ++spin )
+				{
+					map.bold( convert( coord( min_.x + meridian_, DEG2RAD( spin / 10.0 ) ) ),
+					          color );
+					map.bold( convert( coord( max_.x + meridian_, DEG2RAD( spin / 10.0 ) ) ),
+					          color );
+				}
+			}
+			
+			void drawGraticule( plotter::gs &map, int spacing = 15,
+			                    unsigned char color = 1 )
+			{
+				real_t radians = DEG2RAD( spacing );
+				
+				for ( int spin = -900; spin < 900; ++spin )
+				{
+					for ( real_t gratX = min_.x; gratX <= max_.x; gratX += radians )
+					{
+						coord gX( gratX + meridian_, DEG2RAD( spin / 10.0 ) );
+						
+						if ( valid( gX ) ) map.set( convert( gX ), color );
+					}
+					
+					for ( real_t gratY = -max_.y; gratY <= -min_.y; gratY += radians )
+					{
+						coord gY( DEG2RAD( spin / 5.0 ) + meridian_, gratY );
+						
+						if ( valid( gY ) ) map.set( convert( gY ), color );
+					}
+				}
 			}
 			
 			// Operators

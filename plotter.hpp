@@ -66,6 +66,13 @@ namespace zw
 			
 			// Functions
 			
+			void clear()
+			{
+				if ( data != nullptr )
+					for ( size_t i = 0; i < X * Y; ++i )
+						data[i] = c_z;
+			}
+			
 			void inputRange( const real_t minimum, const real_t maximum )
 			{
 				assert( maximum > minimum );
