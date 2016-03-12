@@ -45,8 +45,7 @@ static zw::region_t region_split( const zw::region_t a, const zw::region_t b )
 // Public API
 //
 
-void zw::geoData::subdivide( std::unique_ptr<geoData[]> &data,
-                             cell_size_t &extant )
+void zw::geoData::subdivide( geo_ptr &data, cell_size_t &extant )
 {
 	auto created = extant;
 	
@@ -212,8 +211,7 @@ void zw::geoData::subdivide( std::unique_ptr<geoData[]> &data,
 	extant = created;
 }
 
-void zw::geoData::icosahedron( std::unique_ptr<geoData[]> &data,
-                               cell_size_t &extant )
+void zw::geoData::icosahedron( geo_ptr &data, cell_size_t &extant )
 {
 	real_t t = ( 1.0 + std::sqrt( 5.0 ) ) / 2.0;
 	real_t d = std::sqrt( 1.0 + std::pow( t, 2.0 ) );
@@ -339,8 +337,8 @@ void zw::geoData::icosahedron( std::unique_ptr<geoData[]> &data,
 	extant = 12;
 }
 
-bool zw::geoData::load( std::unique_ptr<geoData[]> &data,
-                        const cell_size_t size, const std::string &file )
+bool zw::geoData::load( geo_ptr &data, const cell_size_t size,
+                        const std::string &file )
 {
 	serialize::input handle( file );
 	
@@ -369,8 +367,8 @@ bool zw::geoData::load( std::unique_ptr<geoData[]> &data,
 	return false;
 }
 
-void zw::geoData::save( std::unique_ptr<geoData[]> &data,
-                        const cell_size_t size, const std::string &file )
+void zw::geoData::save( geo_ptr &data, const cell_size_t size,
+                        const std::string &file )
 {
 	serialize::output handle( file );
 	

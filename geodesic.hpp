@@ -16,6 +16,7 @@ namespace zw
 	
 	struct geoData
 	{
+		using geo_ptr = std::unique_ptr<geoData[]>;
 		geoData() = default;
 		geoData( const geoData & ) = default;
 		geoData &operator=( const geoData & ) = default;
@@ -40,12 +41,30 @@ namespace zw
 		vector v;
 		region_t region;
 		
-		static void subdivide( std::unique_ptr<geoData[]> &data, cell_size_t &extant );
-		static void icosahedron( std::unique_ptr<geoData[]> &data,
-		                         cell_size_t &extant );
-		static bool load( std::unique_ptr<geoData[]> &data, const cell_size_t size,
+		// Algorithm Borrowed From
+		// http://freespace.virgin.net/hugo.elias/models/m_landsp.htm
+		//
+		template<class R>
+		static void perturb( geo_ptr &data, cell_size_t &size, R &rng )
+		{
+			std::uniform_real_distribution<real_t> genReal( -1.0, 1.0 );
+			vector plane( genReal( rng ), genReal( rng ), genReal( rng ) );
+			bool flip = genReal( rng ) < 0;
+			
+			for ( cell_size_t c = 0; c < size; ++c )
+			{
+				if ( ( plane.dotProduct( data[c].v - plane ) > 0 && flip ) || !flip )
+					data[c].v *= 1.0001;
+				else
+					data[c].v /= 1.0001;
+			}
+		}
+		
+		static void subdivide( geo_ptr &data, cell_size_t &extant );
+		static void icosahedron( geo_ptr &data, cell_size_t &extant );
+		static bool load( geo_ptr &data, const cell_size_t size,
 		                  const std::string &file );
-		static void save( std::unique_ptr<geoData[]> &data, const cell_size_t size,
+		static void save( geo_ptr &data, const cell_size_t size,
 		                  const std::string &file );
 		static const cell_size_t nolink = std::numeric_limits<cell_size_t>::max();
 	};
