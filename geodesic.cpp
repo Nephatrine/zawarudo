@@ -45,6 +45,95 @@ static zw::region_t region_split( const zw::region_t a, const zw::region_t b )
 // Public API
 //
 
+zw::range_t zw::geoData::extremes( const geo_ptr &data, const cell_size_t size )
+{
+	real_t maxima = 0;
+	real_t minima = std::numeric_limits<real_t>::max();
+	
+	for ( cell_size_t c = 0; c < size; ++c )
+	{
+		real_t magnitude = data[c].v.magnitude();
+		
+		if ( magnitude < minima ) minima = magnitude;
+		
+		if ( magnitude > maxima ) maxima = magnitude;
+	}
+	
+	assert( minima <= maxima );
+	return std::make_pair( minima, maxima );
+}
+
+zw::real_t zw::geoData::findElevation( const geo_ptr &data,
+                                       const cell_size_t size, const real_t percent, range_t range )
+{
+	assert( range.first <= range.second );
+	assert( percent >= 0 && percent <= 1.0 );
+	
+	if ( percent == 0 ) return range.first;
+	
+	if ( percent == 1.0 ) return range.second;
+	
+	real_t elevation = range.first;
+	real_t old = -1;
+	real_t coverage = 0;
+	
+	while ( coverage != percent && old != elevation && range.first < range.second )
+	{
+		old = elevation;
+		elevation = 0.5 * ( range.first + range.second );
+		cell_size_t count = 0;
+		
+		for ( cell_size_t c = 0; c < size; ++c )
+			if ( data[c].v.magnitude() < elevation )
+				++count;
+				
+		coverage = double( count ) / double( size );
+		
+		if ( coverage < percent )
+			range.first = elevation;
+		else
+			range.second = elevation;
+	}
+	
+	return elevation;
+}
+
+zw::range_t zw::geoData::rescale( const geo_ptr &data, const cell_size_t size,
+                                  const real_t seaLevel, const real_t hydro, const range_t range )
+{
+	assert( range.first <= range.second );
+	assert( seaLevel > range.first );
+	
+	real_t multiplier = std::log( 1.0 / std::sqrt( seaLevel / 6371.0 ) ) + 1.0;
+	real_t targetMin = seaLevel - ( 18.0 / 6371.0 ) * multiplier * seaLevel;
+	real_t targetMax = seaLevel + ( 13.4 / 6371.0 ) * multiplier * seaLevel;
+	
+	for ( cell_size_t c = 0; c < size; ++c )
+	{
+		real_t elevation = data[c].v.magnitude();
+		real_t change;
+		
+		if ( elevation < seaLevel )
+		{
+			// Ocean
+			change = seaLevel - targetMin;
+			multiplier = ( seaLevel - elevation ) / ( seaLevel - range.first );
+			elevation = seaLevel - change * multiplier;
+		}
+		else
+		{
+			// Land
+			change = targetMax - seaLevel;
+			multiplier = ( elevation - seaLevel ) / ( range.second - seaLevel );
+			elevation = seaLevel + change * multiplier;
+		}
+		
+		data[c].v = data[c].v.normalize() * elevation;
+	}
+	
+	return std::make_pair( targetMin, targetMax );
+}
+
 void zw::geoData::subdivide( geo_ptr &data, cell_size_t &extant )
 {
 	auto created = extant;

@@ -45,7 +45,7 @@ namespace zw
 		// http://freespace.virgin.net/hugo.elias/models/m_landsp.htm
 		//
 		template<class R>
-		static void perturb( geo_ptr &data, cell_size_t &size, R &rng )
+		static void perturb( geo_ptr &data, const cell_size_t size, R &rng )
 		{
 			std::uniform_real_distribution<real_t> genReal( -1.0, 1.0 );
 			vector plane( genReal( rng ), genReal( rng ), genReal( rng ) );
@@ -60,12 +60,31 @@ namespace zw
 			}
 		}
 		
+		static range_t extremes( const geo_ptr &data, const cell_size_t size );
+		static real_t findElevation( const geo_ptr &data, const cell_size_t size,
+		                             const real_t percent, range_t range );
+		static range_t rescale( const geo_ptr &data, const cell_size_t size,
+		                        const real_t seaLevel, const real_t hydro, const range_t range );
+		                        
+		static real_t findElevation( const geo_ptr &data, const cell_size_t size,
+		                             const real_t percent )
+		{
+			return findElevation( data, size, percent, extremes( data, size ) );
+		}
+		static range_t rescale( const geo_ptr &data, const cell_size_t size,
+		                        const real_t seaLevel, const real_t hydro )
+		{
+			return rescale( data, size, seaLevel, hydro, extremes( data, size ) );
+		}
+		
 		static void subdivide( geo_ptr &data, cell_size_t &extant );
 		static void icosahedron( geo_ptr &data, cell_size_t &extant );
+		
 		static bool load( geo_ptr &data, const cell_size_t size,
 		                  const std::string &file );
 		static void save( geo_ptr &data, const cell_size_t size,
 		                  const std::string &file );
+		                  
 		static const cell_size_t nolink = std::numeric_limits<cell_size_t>::max();
 	};
 	
