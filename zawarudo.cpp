@@ -59,13 +59,15 @@ int main( int argc, const char *argv[] )
 	         "--force" );
 	         
 	// Geodesic Options
-	opt.add( "", 1, 1, 0, "[#] Icosahedron Subdivisions", "-i", "--subdivide" );
-	opt.add( "", 0, 1, 0, "[#] Terrain Perturbations", "-p", "--perturb" );
-	opt.add( "", 0, 1, 0, "[STRING] Slug Of Alternate World To Load", "--base" );
+	opt.add( "",  1, 1, 0, "[#] Icosahedron Subdivisions", "-i", "--subdivide" );
+	opt.add( "",  0, 1, 0, "[#] Terrain Perturbations", "-p", "--perturb" );
+	opt.add( "",  0, 1, 0, "[STRING] Slug Of Alternate World To Load", "--base" );
 	opt.add( "world", 0, 1, 0, "[STRING] World Filename Slug", "-w", "--world" );
+	opt.add( "", 0, 1, 0, "[KM] Radius of Sphere", "-R", "--radius" );
+	opt.add( "", 0, 1, 0, "[%] Ocean Coverage", "-H", "--hydro" );
 	
 	// Mapping Options
-	opt.add( "equirect", 0, 1, 0, "[STRING] Map -> Projection\n  "
+	opt.add( "", 0, 1, 0, "[STRING] Map -> Projection\n  "
 	         "aitoff          - Aitoff\n  "
 	         "behrmann        - Behrmann Equal-Area\n  "
 	         "braun           - Braun Stereographic\n  "
@@ -127,30 +129,17 @@ int main( int argc, const char *argv[] )
 	int iterations = -1;
 	
 	if ( opt.isSet( "-i" ) )
+	{
 		opt.get( "-i" )->getInt( iterations );
-		
-	if ( iterations < 0 )
-	{
-		std::cerr << "Cannot produce negative subdivisions." << std::endl;
-		return 1;
-	}
-	
-	if ( iterations > SUBDIVIDE_LIMIT )
-	{
-		std::cerr << "Cannot produce >" << SUBDIVIDE_LIMIT << " subdivisions." <<
-		          std::endl;
-		return 1;
+		assert( iterations >= 0 && iterations <= SUBDIVIDE_LIMIT );
 	}
 	
 	int perturbations = 0;
 	
 	if ( opt.isSet( "-p" ) )
-		opt.get( "-p" )->getInt( perturbations );
-		
-	if ( perturbations < 0 )
 	{
-		std::cerr << "Cannot produce negative perturbations." << std::endl;
-		return 1;
+		opt.get( "-p" )->getInt( perturbations );
+		assert( perturbations > 0 );
 	}
 	
 	std::string nameIn, nameOut;
@@ -161,31 +150,49 @@ int main( int argc, const char *argv[] )
 	else
 		nameIn = nameOut;
 		
-	std::string mapType;
+	std::string mapType = "equirect";
 	bool genMap = false;
 	
 	if ( opt.isSet( "-m" ) )
+	{
+		opt.get( "-m" )->getString( mapType );
 		genMap = true;
-		
-	opt.get( "-m" )->getString( mapType );
+	}
 	
 	real_t parallel = ( mapType == "winkel" ) ? RAD2DEG( std::acos(
 	                      2 / M_PI ) ) : 0;
 	                      
 	if ( opt.isSet( "--parallel" ) )
-		opt.get( "--parallel" )->getFloat( parallel );
-		
-	if ( parallel < 0 || parallel >= 90 )
 	{
-		std::cerr << "Standard parallel must be within range 0 <= SP < 90." <<
-		          std::endl;
+		opt.get( "--parallel" )->getFloat( parallel );
+		assert( parallel >= 0 && parallel < 90 );
 	}
 	
 	real_t meridian = 0;
 	
 	if ( opt.isSet( "--meridian" ) )
+	{
 		opt.get( "--meridian" )->getFloat( meridian );
-		
+		assert( meridian >= -180.0 && meridian <= 180.0 );
+	}
+	
+	real_t radius = 0;
+	
+	if ( opt.isSet( "-R" ) )
+	{
+		opt.get( "-R" )->getFloat( radius );
+		assert( radius > 0 );
+	}
+	
+	real_t hydro = 0;
+	
+	if ( opt.isSet( "-H" ) )
+	{
+		opt.get( "-H" )->getFloat( hydro );
+		hydro *= 0.01;
+		assert( hydro >= 0 && hydro <= 1.0 );
+	}
+	
 	//
 	// Seed Generator
 	//
@@ -219,7 +226,7 @@ int main( int argc, const char *argv[] )
 	
 	cell_size_t generated = 0;
 	int pass = -1;
-	bool save = false;
+	bool save = ( nameIn != nameOut );
 	
 	if ( !forceRegen )
 	{
@@ -282,20 +289,36 @@ int main( int argc, const char *argv[] )
 	}
 	
 	//
-	// Get Heights
+	// Elevations
 	//
 	
-	real_t minHeight = 10000;
-	real_t maxHeight = 0;
+	std::cout << "calculating elevations" << std::endl;
 	
-	for ( cell_size_t c = 0; c < cells; ++c )
+	real_t seaLevel = geoData::findElevation( geodesic, cells, hydro );
+	
+	if ( radius > 0 )
 	{
-		real_t magnitude = geodesic[c].v.magnitude();
+		for ( cell_size_t c = 0; c < cells; ++c )
+		{
+			real_t multiplier = ( geodesic[c].v.magnitude() / seaLevel ) * radius;
+			geodesic[c].v = geodesic[c].v.normalize() * multiplier;
+		}
 		
-		if ( magnitude < minHeight ) minHeight = magnitude;
-		
-		if ( magnitude > maxHeight ) maxHeight = magnitude;
+		save = true;
 	}
+	
+	range_t extremes = geoData::extremes( geodesic, cells );
+	seaLevel = geoData::findElevation( geodesic, cells, hydro, extremes );
+	
+	if ( hydro > 0 )
+		extremes = geoData::rescale( geodesic, cells, seaLevel, hydro, extremes );
+		
+	std::cout << "  high point: " << extremes.second << " km" << std::endl;
+	
+	if ( seaLevel > extremes.first )
+		std::cout << "  sea level:  " << seaLevel << " km" << std::endl;
+		
+	std::cout << "  low point:  " << extremes.first << " km" << std::endl;
 	
 	//
 	// Output Geodesic
@@ -366,7 +389,7 @@ int main( int argc, const char *argv[] )
 	else if ( mapType == "gall" )
 	{
 		view = proj_ptr( new projection::stereographic( 2 ) );
-		paralel = 0;
+		parallel = 0;
 	}
 	else if ( mapType == "hammer" )
 	{
@@ -439,19 +462,41 @@ int main( int argc, const char *argv[] )
 		map.write( name );
 	}
 	
-	if ( ( save || genMap ) && minHeight < maxHeight )
+	if ( ( save || genMap ) && extremes.first < extremes.second )
 	{
 	
 		std::string name = getMapFile( nameOut, "height", mapType, iterations, parallel,
 		                               meridian );
 		std::cout << "saving map " << name << std::endl;
 		map.clear();
-		map.inputRange( minHeight, maxHeight );
+		map.inputRange( extremes );
 		
 		for ( cell_size_t c = 0; c < cells; ++c )
 			if ( view->valid( coord( geodesic[c].v ) ) )
 				map.plot( view->convert( geodesic[c].v ), geodesic[c].v.magnitude() );
 				
+		view->drawBorder( map );
+		map.fill();
+		view->drawGraticule( map );
+		map.write( name );
+	}
+	
+	if ( ( save || genMap ) && seaLevel > extremes.first )
+	{
+		std::string name = getMapFile( nameOut, "land", mapType, iterations, parallel,
+		                               meridian );
+		std::cout << "saving map " << name << std::endl;
+		map.clear();
+		map.inputRange( extremes );
+		
+		for ( cell_size_t c = 0; c < cells; ++c )
+			if ( view->valid( coord( geodesic[c].v ) ) )
+			{
+				real_t magnitude = geodesic[c].v.magnitude();
+				map.plot( view->convert( geodesic[c].v ),
+				          magnitude < seaLevel ? extremes.first : magnitude );
+			}
+			
 		view->drawBorder( map );
 		map.fill();
 		view->drawGraticule( map );
