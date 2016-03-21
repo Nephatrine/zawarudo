@@ -68,6 +68,7 @@ namespace zw
 #else
 	using real_t = double;
 #endif
+	using range_t = std::pair<real_t, real_t>;
 }
 
 #endif

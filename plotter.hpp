@@ -79,6 +79,10 @@ namespace zw
 				min = minimum;
 				max = maximum;
 			}
+			void inputRange( const range_t range )
+			{
+				inputRange( range.first, range.second );
+			}
 			
 			void mask( const unsigned char zero, const unsigned char nospread = 1 )
 			{
