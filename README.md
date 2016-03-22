@@ -20,24 +20,70 @@ See complete usage instructions:
 
 `zawarudo --help`
 
-Generate a basic geodesic grid with 8 subdivisions and name it `test_grid`:
+### Create Geodesic Grid
 
-`zawarudo -w test_grid -i 8`
+Generate a basic geodesic grid with 8 subdivisions and name it `test_grid`.
+Generating geodesics with greater numbers of subdivisions takes progressively
+longer. At 10 subdivisions it takes 20-30 seconds usually.
 
-Use `test_grid` as a base and create height data and save as `test_terrain`:
+`zawarudo -i 8 -w geodesic`
 
-`zawarudo -w test_terrain --base test_grid -i 8 -p 10000`
+This generates a flat grid named `geodesic_8.dat`.
 
-Rescale 'test_terrain' to Earth-like dimensions and hydrographics:
+### Create Heightmap
 
-`zawarudo -w test_terrain -i 8 -R 6371 -H 70`
+The geodesic grid created above is an approximation of a flat sphere and so
+doesn't have any elevation differences aside from those that arise from
+floating-point precision issues.
+
+This command takes the geodesic we created earlier and perturbs the points that
+make up the geodesic shape. This uses a slicing process that needs to run a
+large number of iterations to generate a pleasing result.
+
+The number of perturbation passes and number of subdivision passes both will
+increase the time this takes dramatically. Running the preferred 10,000 perturb
+passes on a geodesic with 8 subdivisions takes over 5 minutes.
+
+`zawarudo -i 8 -p 10000 -w geodesic`
+
+That loads `geodesic_8.dat` and runs 10,000 perturbation passes on it. This
+will take a long time at 8+ subdivision iterations. It then saves the generated
+grid to the original file.
+
+### Scale To Planet
+
+Planets aren't just randomized spheres. There are limits on the height of
+peaks, depth of trenches, etc. Our geodesic grid so far is also based on a unit
+sphere currently where we'd prefer to work with other units such as kilometers.
+
+We'll use our heightmap terrain as a base so we don't need to wait through the
+perturbation process again.
+
+This command will take out heightmap data and scale it to Moon-size.
+
+`zawarudo -i 8 -R 1737 -w lunar --base geodesic`
+
+This command will take our heightmap data and scale it to Earth-size with 70%
+hydrographic coverage.
+
+`zawarudo -i 8 -R 6371 -H 70 -w terran --base geodesic`
+
+This is the difference between the two generated bodies. The hydrographic
+coverage greatly affects the generated outcome.
+
+**IMPORTANT:** Once you add a hydrographic coverage to a world, any further
+changes to the hydrographic coverage will not preserve the slope of the land
+correctly. If you need to change the coverage at a later point, it is suggested
+to run the command using a backed up grid that you did not already apply it to.
+
+### Create Maps
 
 Create orthographic projections of front and back hemispheres:
 
-`zawarudo -w test_terrain -i 8 -m orthographic`
-`zawarudo -w test_terrain -i 8 -m orthographic --meridian 180`
+`zawarudo -w terran -i 8 -m orthographic`
+`zawarudo -w terran -i 8 -m orthographic --meridian 180`
 
 Create equirectangular projections with 45-degree standard parallel:
 
-`zawarudo -w test_terrain -i 8 --parallel 45`
+`zawarudo -w terran -i 8 --parallel 45`
 

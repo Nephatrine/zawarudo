@@ -67,12 +67,11 @@ zw::real_t zw::geoData::findElevation( const geo_ptr &data,
                                        const cell_size_t size, const real_t percent, range_t range )
 {
 	assert( range.first <= range.second );
-	assert( percent >= 0 && percent <= 1.0 );
+	assert( percent >= 0 && percent < 1.0 );
 	
-	if ( percent == 0 ) return range.first;
-	
-	if ( percent == 1.0 ) return range.second;
-	
+	if ( percent == 0 )
+		return 0.5 * ( range.first + range.second );
+		
 	real_t elevation = range.first;
 	real_t old = -1;
 	real_t coverage = 0;
@@ -102,30 +101,100 @@ zw::range_t zw::geoData::rescale( const geo_ptr &data, const cell_size_t size,
                                   const real_t seaLevel, const real_t hydro, const range_t range )
 {
 	assert( range.first <= range.second );
-	assert( seaLevel > range.first );
+	assert( seaLevel > range.first && seaLevel < range.second );
+	assert( hydro >= 0 && hydro < 1.0 );
 	
 	real_t multiplier = std::log( 1.0 / std::sqrt( seaLevel / 6371.0 ) ) + 1.0;
-	real_t targetMin = seaLevel - ( 18.0 / 6371.0 ) * multiplier * seaLevel;
-	real_t targetMax = seaLevel + ( 13.4 / 6371.0 ) * multiplier * seaLevel;
+	real_t targetMin, targetMax, startMountain, startShelf, startSlope, startFloor;
+	
+	if ( hydro > 0 )
+	{
+		targetMin = seaLevel - ( 18.0 / 6371.0 ) * multiplier * seaLevel;
+		targetMax = seaLevel + ( 13.4 / 6371.0 ) * multiplier * seaLevel;
+		startFloor = findElevation( data, size, 0.15 * hydro, range );
+		startSlope = findElevation( data, size, 0.70 * hydro, range );
+		startShelf = findElevation( data, size, 0.85 * hydro, range );
+		startMountain = findElevation( data, size, ( 1.0 / 3.0 ) * hydro + 2.0 / 3.0,
+		                               range );
+	}
+	else
+	{
+		targetMin = seaLevel - ( 15.7 / 6371.0 ) * multiplier * seaLevel;
+		targetMax = seaLevel + ( 15.7 / 6371.0 ) * multiplier * seaLevel;
+	}
 	
 	for ( cell_size_t c = 0; c < size; ++c )
 	{
 		real_t elevation = data[c].v.magnitude();
-		real_t change;
+		real_t change, base;
 		
-		if ( elevation < seaLevel )
+		if ( hydro > 0 )
 		{
-			// Ocean
-			change = seaLevel - targetMin;
-			multiplier = ( seaLevel - elevation ) / ( seaLevel - range.first );
-			elevation = seaLevel - change * multiplier;
+			if ( elevation < startFloor )
+			{
+				// Ocean Trench
+				change = ( seaLevel - targetMin ) * 0.4;
+				base = ( seaLevel - targetMin ) * 0.6;
+				multiplier = ( startFloor - elevation ) / ( startFloor - range.first );
+				elevation = seaLevel - base - change * multiplier;
+			}
+			else if ( elevation < startSlope )
+			{
+				// Ocean Floor
+				change = ( seaLevel - targetMin ) * 0.2;
+				base = ( seaLevel - targetMin ) * 0.4;
+				multiplier = ( startSlope - elevation ) / ( startSlope - startFloor );
+				elevation = seaLevel - base - change * multiplier;
+			}
+			else if ( elevation < startShelf )
+			{
+				// Ocean Drop
+				change = ( seaLevel - targetMin ) * 0.3;
+				base = ( seaLevel - targetMin ) * 0.1;
+				multiplier = ( startShelf - elevation ) / ( startShelf - startSlope );
+				elevation = seaLevel - base - change * multiplier;
+			}
+			else if ( elevation < seaLevel )
+			{
+				// Continental Shelf
+				change = ( seaLevel - targetMin ) * 0.1;
+				base = 0;
+				multiplier = ( seaLevel - elevation ) / ( seaLevel - startShelf );
+				elevation = seaLevel - base - change * multiplier;
+			}
+			else if ( elevation < startMountain )
+			{
+				// Plains
+				change = ( targetMax - seaLevel ) * 0.125;
+				base = ( targetMax - seaLevel ) * 0.875;
+				multiplier = ( startMountain - elevation ) / ( startMountain - seaLevel );
+				elevation = targetMax - base - change * multiplier;
+			}
+			else
+			{
+				// Mountain
+				change = ( targetMax - seaLevel ) * 0.875;
+				base = 0;
+				multiplier = ( range.second - elevation ) / ( range.second - startMountain );
+				elevation = targetMax - base - change * multiplier;
+			}
 		}
 		else
 		{
-			// Land
-			change = targetMax - seaLevel;
-			multiplier = ( elevation - seaLevel ) / ( range.second - seaLevel );
-			elevation = seaLevel + change * multiplier;
+			if ( elevation < seaLevel )
+			{
+				// Ocean
+				change = seaLevel - targetMin;
+				multiplier = ( seaLevel - elevation ) / ( seaLevel - range.first );
+				elevation = seaLevel - change * multiplier;
+			}
+			else
+			{
+				// Land
+				change = targetMax - seaLevel;
+				multiplier = ( range.second - elevation ) / ( range.second - seaLevel );
+				elevation = targetMax - change * multiplier;
+			}
 		}
 		
 		data[c].v = data[c].v.normalize() * elevation;

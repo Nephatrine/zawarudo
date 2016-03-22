@@ -310,12 +310,15 @@ int main( int argc, const char *argv[] )
 	range_t extremes = geoData::extremes( geodesic, cells );
 	seaLevel = geoData::findElevation( geodesic, cells, hydro, extremes );
 	
-	if ( hydro > 0 )
+	if ( hydro > 0 || radius > 0 )
+	{
 		extremes = geoData::rescale( geodesic, cells, seaLevel, hydro, extremes );
-		
+		save = true;
+	}
+	
 	std::cout << "  high point: " << extremes.second << " km" << std::endl;
 	
-	if ( seaLevel > extremes.first )
+	if ( hydro > 0 && seaLevel > extremes.first )
 		std::cout << "  sea level:  " << seaLevel << " km" << std::endl;
 		
 	std::cout << "  low point:  " << extremes.first << " km" << std::endl;
@@ -444,7 +447,7 @@ int main( int argc, const char *argv[] )
 	
 	plotter::gs map( view->aspect(), 768, 512 );
 	
-	if ( save || genMap )
+	if ( genMap )
 	{
 		std::string name = getMapFile( nameOut, "region", mapType, iterations, parallel,
 		                               meridian );
@@ -462,7 +465,7 @@ int main( int argc, const char *argv[] )
 		map.write( name );
 	}
 	
-	if ( ( save || genMap ) && extremes.first < extremes.second )
+	if ( genMap  && extremes.first < extremes.second )
 	{
 	
 		std::string name = getMapFile( nameOut, "height", mapType, iterations, parallel,
@@ -481,7 +484,7 @@ int main( int argc, const char *argv[] )
 		map.write( name );
 	}
 	
-	if ( ( save || genMap ) && seaLevel > extremes.first )
+	if ( genMap  && hydro > 0 )
 	{
 		std::string name = getMapFile( nameOut, "land", mapType, iterations, parallel,
 		                               meridian );
