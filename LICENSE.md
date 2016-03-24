@@ -19,7 +19,10 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-## Header-Only Libraries
+## Third-Party Libraries
 
-The files in the `lib` directory are header-only libraries released under licenses compatible with the **MIT License** above and used in compliance with those licenses. Please see the copyright information inside each of those files for their respective copyright and license information.
+The files in the `lib` directory are libraries released under licenses
+compatible with the **MIT License** above and used in compliance with those
+licenses. Please see the copyright information inside each of those files for
+their respective copyright and license information.
 

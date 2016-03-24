@@ -108,6 +108,7 @@ endif()
 set(ZAWARUDO_HEADERS
 	"${PROJECT_SOURCE_DIR}/config.hpp"
 	"${PROJECT_SOURCE_DIR}/lib/ezOptionParser.hpp"
+	"${PROJECT_SOURCE_DIR}/lib/noise.h"
 	"${PROJECT_SOURCE_DIR}/lib/stb_image_write.h"
 	"${PROJECT_SOURCE_DIR}/coord.hpp"
 	"${PROJECT_SOURCE_DIR}/geodesic.hpp"
@@ -117,6 +118,7 @@ set(ZAWARUDO_HEADERS
 	"${PROJECT_SOURCE_DIR}/serialize.hpp"
 	"${PROJECT_SOURCE_DIR}/vector.hpp")
 set(ZAWARUDO_SOURCE
+	"${PROJECT_SOURCE_DIR}/lib/noise.cpp"
 	"${PROJECT_SOURCE_DIR}/geodesic.cpp"
 	"${PROJECT_SOURCE_DIR}/plotter.cpp"
 	"${PROJECT_SOURCE_DIR}/zawarudo.cpp")
