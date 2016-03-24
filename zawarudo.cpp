@@ -289,6 +289,8 @@ int main( int argc, const char *argv[] )
 			result = result * 0.1 + 1.0;
 			geodesic[c].v *= result;
 		}
+		
+		save = true;
 	}
 	
 	//
