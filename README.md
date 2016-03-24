@@ -44,11 +44,25 @@ The number of perturbation passes and number of subdivision passes both will
 increase the time this takes dramatically. Running the preferred 10,000 perturb
 passes on a geodesic with 8 subdivisions takes over 5 minutes.
 
-`zawarudo -i 8 -p 10000 -w geodesic`
+`zawarudo -i 8 -n -p 10000 -w geodesic`
 
-That loads `geodesic_8.dat` and runs 10,000 perturbation passes on it. This
-will take a long time at 8+ subdivision iterations. It then saves the generated
-grid to the original file.
+That loads `geodesic_8.dat`, seeds it with Perlin noise,  and runs 10,000
+perturbation passes on it. This will take a long time at 8+ subdivision
+iterations. It then saves the generated grid to the original file.
+
+Here's a planet using just Perlin noise (`-n`):
+
+![Perlin Planet](http://i.imgur.com/RqUEOuw.png)
+
+Here's a planet using just the slicing method (`-p 10000`):
+
+![Sliced Planet](http://i.imgur.com/ssoYq4Q.png)
+
+Here's one with both selected:
+
+![Hybrid Planet](http://i.imgur.com/uPJk9Ag.png)
+
+Using both options tends to preserve the shape of the Perlin noise, but with much greater detail.
 
 ### Scale To Planet
 
@@ -59,17 +73,10 @@ sphere currently where we'd prefer to work with other units such as kilometers.
 We'll use our heightmap terrain as a base so we don't need to wait through the
 perturbation process again.
 
-This command will take out heightmap data and scale it to Moon-size.
-
-`zawarudo -i 8 -R 1737 -w lunar --base geodesic`
-
 This command will take our heightmap data and scale it to Earth-size with 70%
 hydrographic coverage.
 
 `zawarudo -i 8 -R 6371 -H 70 -w terran --base geodesic`
-
-This is the difference between the two generated bodies. The hydrographic
-coverage greatly affects the generated outcome.
 
 **IMPORTANT:** Once you add a hydrographic coverage to a world, any further
 changes to the hydrographic coverage will not preserve the slope of the land

@@ -54,9 +54,9 @@ namespace zw
 			for ( cell_size_t c = 0; c < size; ++c )
 			{
 				if ( ( plane.dotProduct( data[c].v - plane ) > 0 && flip ) || !flip )
-					data[c].v *= 1.0001;
+					data[c].v *= 1.001;
 				else
-					data[c].v /= 1.0001;
+					data[c].v /= 1.001;
 			}
 		}
 		

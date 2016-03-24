@@ -4,6 +4,7 @@
 
 // Third-Party Headers
 #include "lib/ezOptionParser.hpp"
+#include "lib/noise.h"
 
 static void show_usage( ez::ezOptionParser &opt )
 {
@@ -61,10 +62,12 @@ int main( int argc, const char *argv[] )
 	// Geodesic Options
 	opt.add( "",  1, 1, 0, "[#] Icosahedron Subdivisions", "-i", "--subdivide" );
 	opt.add( "",  0, 1, 0, "[#] Terrain Perturbations", "-p", "--perturb" );
+	opt.add( "",  0, 0, 0, "Seed terrain with 3D perlin noise.", "-n", "--noise" );
 	opt.add( "",  0, 1, 0, "[STRING] Slug Of Alternate World To Load", "--base" );
 	opt.add( "world", 0, 1, 0, "[STRING] World Filename Slug", "-w", "--world" );
 	opt.add( "", 0, 1, 0, "[KM] Radius of Sphere", "-R", "--radius" );
 	opt.add( "", 0, 1, 0, "[%] Ocean Coverage", "-H", "--hydro" );
+	opt.add( "", 0, 1, 0, "[#] Seed For Random Number Generation", "-s", "--seed" );
 	
 	// Mapping Options
 	opt.add( "", 0, 1, 0, "[STRING] Map -> Projection\n  "
@@ -134,6 +137,11 @@ int main( int argc, const char *argv[] )
 		assert( iterations >= 0 && iterations <= SUBDIVIDE_LIMIT );
 	}
 	
+	bool usePerlin = false;
+	
+	if ( opt.isSet( "-n" ) )
+		usePerlin = true;
+		
 	int perturbations = 0;
 	
 	if ( opt.isSet( "-p" ) )
@@ -193,14 +201,18 @@ int main( int argc, const char *argv[] )
 		assert( hydro >= 0 && hydro <= 1.0 );
 	}
 	
-	//
-	// Seed Generator
-	//
-	
 	std::random_device seedGen;
 	auto seed = seedGen();
+	
+	if ( opt.isSet( "-s" ) )
+	{
+		int userSeed;
+		opt.get( "-s" )->getInt( userSeed );
+		seed = userSeed;
+	}
+	
 	std::cout << "using seed " << seed << std::endl;
-	std::mt19937_64 rng( seedGen() );
+	std::mt19937_64 rng( seed );
 	
 	//
 	// Allocate Memory
@@ -263,7 +275,24 @@ int main( int argc, const char *argv[] )
 	assert( cells == generated );
 	
 	//
-	// Randomize Terrain
+	// Perlin Noise
+	//
+	
+	if ( usePerlin )
+	{
+		noise::PerlinOctave perlin( 8, seed );
+		
+		for ( cell_size_t c = 0; c < cells; ++c )
+		{
+			real_t result = perlin.noise( geodesic[c].v.x, geodesic[c].v.y,
+			                              geodesic[c].v.z );
+			result = result * 0.1 + 1.0;
+			geodesic[c].v *= result;
+		}
+	}
+	
+	//
+	// Perturb Terrain
 	//
 	
 	if ( perturbations > 0 )
