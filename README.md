@@ -51,7 +51,7 @@ Here's a planet using just FBM noise (`-n`):
 
 Here's a planet with added ridged noise (`-r`):
 
-![Ridged Planet](ihttp://i.imgur.com/JpnYK2Z.png)
+![Ridged Planet](http://i.imgur.com/JpnYK2Z.png)
 
 ### Scale To Planet
 
