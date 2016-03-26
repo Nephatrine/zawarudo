@@ -31,6 +31,13 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 namespace noise {
 
+template<typename T>
+T lerp(const T t, const T a, const T b)
+{
+	T f = (1.0 - std::cos( t * M_PI )) * 0.5;
+    return (1.0 - f) * a + f * b;
+}
+
 class Perlin {
 public:
     Perlin(uint32_t seed=0);
@@ -45,14 +52,16 @@ private:
 
 class PerlinOctave {
 public:
-    PerlinOctave(int octaves, uint32_t seed=0);
+    PerlinOctave(int octaves, double lacuna = 2.0, uint32_t seed=0);
 
-    double noise(double x) const { return noise(x, 0, 0); }
-    double noise(double x, double y) const { return noise(x, y, 0); }
-    double noise(double x, double y, double z) const;
+    double noise(double x, double persist) const { return noise(x, 0, 0, persist); }
+    double noise(double x, double y, double persist) const { return noise(x, y, 0, persist); }
+    double noise(double x, double y, double z, double persist) const;
+	double ridge(double x, double y, double z) const;
 
 private:
     Perlin perlin_;
+	double lacuna_;
     int octaves_;
 };
 

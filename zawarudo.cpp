@@ -61,13 +61,22 @@ int main( int argc, const char *argv[] )
 	         
 	// Geodesic Options
 	opt.add( "",  1, 1, 0, "[#] Icosahedron Subdivisions", "-i", "--subdivide" );
-	opt.add( "",  0, 1, 0, "[#] Terrain Perturbations", "-p", "--perturb" );
-	opt.add( "",  0, 0, 0, "Seed terrain with 3D perlin noise.", "-n", "--noise" );
-	opt.add( "",  0, 1, 0, "[STRING] Slug Of Alternate World To Load", "--base" );
-	opt.add( "world", 0, 1, 0, "[STRING] World Filename Slug", "-w", "--world" );
+	opt.add( "",  0, 1, 0, "[STR] Slug Of Alternate World To Load", "--base" );
+	opt.add( "world", 0, 1, 0, "[STR] World Filename Slug", "-w", "--world" );
+	
+	// World Creation Parameters
 	opt.add( "", 0, 1, 0, "[KM] Radius of Sphere", "-R", "--radius" );
 	opt.add( "", 0, 1, 0, "[%] Ocean Coverage", "-H", "--hydro" );
-	opt.add( "", 0, 1, 0, "[#] Seed For Random Number Generation", "-s", "--seed" );
+	
+	// Perlin Terrain Generation
+	opt.add( "", 0, 0, 0, "Use 3D Fractal Perlin Noise", "-n", "--noise" );
+	opt.add( "", 0, 0, 0, "Use 3D Fractal Ridged Noise", "-r", "--ridge" );
+	opt.add( "", 0, 1, 0, "[#] Noise Seed", "--seed" );
+	opt.add( "", 0, 1, 0, "[#] Noise Peristence\n  suggested: (0.0 - 1.0)",
+	         "--persist" );
+	opt.add( "", 0, 1, 0, "[#] Noise Lacunarity\n  suggested: [1.5 - 3.5]",
+	         "--lacuna" );
+	opt.add( "", 0, 1, 0, "[#] Noise Octaves\n  suggested: [1 - 16]", "--octave" );
 	
 	// Mapping Options
 	opt.add( "", 0, 1, 0, "[STRING] Map -> Projection\n  "
@@ -137,19 +146,6 @@ int main( int argc, const char *argv[] )
 		assert( iterations >= 0 && iterations <= SUBDIVIDE_LIMIT );
 	}
 	
-	bool usePerlin = false;
-	
-	if ( opt.isSet( "-n" ) )
-		usePerlin = true;
-		
-	int perturbations = 0;
-	
-	if ( opt.isSet( "-p" ) )
-	{
-		opt.get( "-p" )->getInt( perturbations );
-		assert( perturbations > 0 );
-	}
-	
 	std::string nameIn, nameOut;
 	opt.get( "-w" )->getString( nameOut );
 	
@@ -201,13 +197,49 @@ int main( int argc, const char *argv[] )
 		assert( hydro >= 0 && hydro <= 1.0 );
 	}
 	
-	std::random_device seedGen;
-	auto seed = seedGen();
+	//
+	// Perlin Noise Terrain Generation
+	//
 	
-	if ( opt.isSet( "-s" ) )
+	bool generateTerrain = false;
+	bool usePerlin = false;
+	bool useRidged = false;
+	double lacunarity = 2.0;
+	double persistence = 1.0 / std::sqrt( 2.0 );
+	int octaves = 10;
+	
+	if ( opt.isSet( "-n" ) )
 	{
-		int userSeed;
-		opt.get( "-s" )->getInt( userSeed );
+		generateTerrain = true;
+		usePerlin = true;
+	}
+	
+	if ( opt.isSet( "-r" ) )
+	{
+		generateTerrain = true;
+		useRidged = true;
+	}
+	
+	if ( opt.isSet( "--lacuna" ) )
+		opt.get( "--lacuna" )->getDouble( lacunarity );
+		
+	if ( opt.isSet( "--persist" ) )
+		opt.get( "--persist" )->getDouble( persistence );
+		
+	if ( opt.isSet( "--octave" ) )
+		opt.get( "--octave" )->getInt( octaves );
+		
+	assert( lacunarity > 1.0 );
+	assert( persistence > 0.0 && persistence < 1.0 );
+	assert( octaves > 0 );
+	
+	std::random_device seedGen;
+	unsigned long seed = seedGen();
+	
+	if ( opt.isSet( "--seed" ) )
+	{
+		unsigned long userSeed;
+		opt.get( "--seed" )->getULong( userSeed );
 		seed = userSeed;
 	}
 	
@@ -278,42 +310,46 @@ int main( int argc, const char *argv[] )
 	// Perlin Noise
 	//
 	
-	if ( usePerlin )
+	if ( generateTerrain == true )
 	{
-		noise::PerlinOctave perlin( 8, seed );
+		std::cout << "generating noise" << std::endl;
+		std::cout << "  octaves = " << octaves << std::endl;
+		
+		if ( usePerlin )
+			std::cout << "  persistence = " << persistence << std::endl;
+			
+		std::cout << "  lacunarity = " << lacunarity << std::endl;
+		std::cout << "  seed = " << seed << std::endl;
+		
+		noise::PerlinOctave perlin( octaves, lacunarity, seed );
+		noise::PerlinOctave fractl( 6.0, lacunarity, seed * 1.5 );
 		
 		for ( cell_size_t c = 0; c < cells; ++c )
 		{
-			real_t result = perlin.noise( geodesic[c].v.x, geodesic[c].v.y,
-			                              geodesic[c].v.z );
-			result = result * 0.1 + 1.0;
-			geodesic[c].v *= result;
-		}
-		
-		save = true;
-	}
-	
-	//
-	// Perturb Terrain
-	//
-	
-	if ( perturbations > 0 )
-	{
-		int tenper = perturbations / 10;
-		int ci = 0, cp = 0;
-		
-		std::cout << "running " << perturbations << " perturbations" << std::endl;
-		
-		for ( int i = 0; i < perturbations; ++i, ++ci )
-		{
-			if ( ci == tenper )
+			double result = 0;
+			double trench = 0;
+			double ridges = 0;
+			
+			if ( usePerlin )
+				result = perlin.noise( geodesic[c].v.x, geodesic[c].v.y, geodesic[c].v.z,
+				                       persistence );
+				                       
+			if ( useRidged )
 			{
-				cp += 10;
-				ci = 0;
-				std::cout << "  " << cp << "%" << std::endl;
+				trench = perlin.ridge( geodesic[c].v.x, geodesic[c].v.y, geodesic[c].v.z );
+				ridges = fractl.ridge( geodesic[c].v.x, geodesic[c].v.y, geodesic[c].v.z );
+				
+				if ( result > 0.75 ) result = ( result - 0.75 ) * 0.5 + 0.75;
+				
+				if ( result < -0.75 ) result = ( result + 0.75 ) * 0.5 - 0.75;
 			}
 			
-			geoData::perturb( geodesic, cells, rng );
+			if ( ridges > 0.25 ) result += ( ridges - 0.25 ) * 4.0 / 3.0;
+			
+			if ( trench > 0.25 ) result -= ( trench - 0.25 ) * 4.0 / 3.0;
+			
+			result = result * 0.2 + 1.0;
+			geodesic[c].v *= result;
 		}
 		
 		save = true;

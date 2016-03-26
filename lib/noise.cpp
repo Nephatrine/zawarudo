@@ -33,10 +33,6 @@ double fade(double t) {
     return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
-double lerp(double t, double a, double b) {
-    return a + t * (b - a);
-}
-
 double grad(int hash, double x, double y, double z) {
     int h = hash & 15;
     double u = h < 8 ? x : y;
@@ -103,26 +99,46 @@ double Perlin::noise(double x, double y, double z) const {
     return lerp(w, a, b);
 }
 
-PerlinOctave::PerlinOctave(int octaves, uint32_t seed):
+PerlinOctave::PerlinOctave(int octaves, double lacuna, uint32_t seed):
     perlin_(seed),
-    octaves_(octaves) {
+	lacuna_(lacuna),
+    octaves_(octaves)
+{}
 
-}
-
-double PerlinOctave::noise(double x, double y, double z) const {
+double PerlinOctave::noise(double x, double y, double z, double persist) const {
     double result = 0.0;
     double amp = 1.0;
 
     int i = octaves_;
     while(i--) {
         result += perlin_.noise(x, y, z) * amp;
-        x *= 2.0;
-        y *= 2.0;
-        z *= 2.0;
-        amp *= 0.5;
+        x *= lacuna_;
+        y *= lacuna_;
+        z *= lacuna_;
+        amp *= persist;
     }
 
     return result;
+}
+
+double PerlinOctave::ridge(double x, double y, double z) const {
+	double result = 0.0;
+	double amp = 1.0;
+	double freq = 1.0;
+
+	int i = octaves_;
+	while(i--) {
+		double signal = 1.0 - std::abs(perlin_.noise(x, y, z));
+		signal *= signal * amp;
+		freq *= lacuna_;
+		x *= lacuna_;
+		y *= lacuna_;
+		z *= lacuna_;
+		result += signal / freq;
+		amp = std::max(std::min(signal * 2.0, 1.0), 0.0);
+	}
+
+	return (result * 2.0) - 1.0;
 }
 
 }
